@@ -1,3 +1,7 @@
+// import { getCurrentWindow } from '@tauri-apps/api/window';
+// import { primaryMonitor } from '@tauri-apps/api/window';
+
+
 import {
     createApp,
     ref
@@ -69,6 +73,7 @@ const application = createApp({
             if (this.settings["auto.start.prediction"]) {
                 this.toggleWebcam();
             }
+            // this.resizeAndCenter();
         },
         async predict() {
             let results;
@@ -106,6 +111,18 @@ const application = createApp({
 
             this.$refs["input-video"].requestVideoFrameCallback(this.predict);
         },
+        // async resizeAndCenter() {
+        //     const monitor = await primaryMonitor();
+        //     const window = getCurrentWindow();
+
+        //     if (monitor) {
+        //         const width = Math.floor(monitor.size.width * 0.75);
+        //         const height = Math.floor(monitor.size.height * 0.75);
+
+        //         await window.setSize({ width, height });
+        //         await window.center();
+        //     }
+        // },
         toggleWebcam() {
             if (this.predicting) {
                 const srcObject = this.$refs["input-video"].srcObject;
@@ -154,21 +171,21 @@ const application = createApp({
         },
         themeChanged(event) {
             this.applyTheme();
-            ahk.SetDarkMode(this.settings.theme === "dark");
+            // ahk.SetDarkMode(this.settings.theme === "dark");
         },
         shortcutChanged() {
-            ahk.SetShortcut(this.settings["auto.start.with.windows"]);
+            // ahk.SetShortcut(this.settings["auto.start.with.windows"]);
         },
         testing() {
             console.log("69");
             return 5;
         },
         exiting() {
-            if (this.settings["auto.save.profiles"]){
+            if (this.settings["auto.save.profiles"]) {
                 this.saveProfiles();
                 console.log("Profiles saved.");
             }
-            if (this.settings["auto.save.settings"]) 
+            if (this.settings["auto.save.settings"])
                 this.saveSettings();
             return true;
         },
@@ -182,7 +199,7 @@ const application = createApp({
         },
         saveSettings() {
             const parsed = JSON.stringify(this.settings, null, '\t');
-            ahk.SaveSettings(parsed);
+            // ahk.SaveSettings(parsed);
         },
         profileChanged(event) {
             const value = event.target.value;
@@ -227,7 +244,7 @@ const application = createApp({
         saveProfiles() {
             try {
                 const parsed = JSON.stringify(this.app.profiles, null, '\t');
-                ahk.SaveProfiles(parsed);
+                // ahk.SaveProfiles(parsed);
             } catch (error) {
                 console.error(error);
             }
@@ -295,12 +312,12 @@ const application = createApp({
                             binding.time = time;
                         } else if (time - binding.time > binding.debounce) {
                             // Debounce period elapsed - activate
-                            ahk.SimulateInput(binding.ahk, this.settings["allow.input.simulation"]);
+                            // ahk.SimulateInput(binding.ahk, this.settings["allow.input.simulation"]);
                             binding.activated = true;
                         }
                     } else {
                         // Immediate activation for non-debounced bindings
-                        ahk.SimulateInput(binding.ahk, this.settings["allow.input.simulation"]);
+                        // ahk.SimulateInput(binding.ahk, this.settings["allow.input.simulation"]);
                         binding.activated = true;
                     }
                 }
@@ -315,12 +332,12 @@ const application = createApp({
         processSimpleBindings(binding, results) {
             if (binding.activated) {
                 if (binding.threshold < results[binding.blendshape]) {
-                    ahk.SimulateInput(binding.ahk.start, this.settings["allow.input.simulation"]);
+                    // ahk.SimulateInput(binding.ahk.start, this.settings["allow.input.simulation"]);
                     binding.activated = false;
                 }
             } else {
                 if (binding.threshold > results[binding.blendshape]) {
-                    ahk.SimulateInput(binding.ahk.stop, this.settings["allow.input.simulation"]);
+                    // ahk.SimulateInput(binding.ahk.stop, this.settings["allow.input.simulation"]);
                     binding.activated = true;
                 }
             }

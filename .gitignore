@@ -1,34 +1,85 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Tauri / Rust
+/src-tauri/target/
+/src-tauri/WixTools/
+/src-tauri/gen/
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+# Frontend dependencies
+node_modules/
+dist/
+dist-ssr/
+build/
 
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# Frontend build outputs
+*.local
 
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-extensions.json
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Visual Studio Code
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDEs and Editors
+## VSCode
 .vscode/*
+!.vscode/extensions.json
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
-!.vscode/extensions.json
-.history/*
+*.code-workspace
 
-# System files
+## JetBrains IDEs (IntelliJ, WebStorm, RustRover, CLion, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+## Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+## Vim
+*.swp
+*.swo
+*~
+.*.sw?
+Session.vim
+
+## Emacs
+*~
+\#*\#
+.\#*
+.dir-locals.el
+
+## Atom
+.atom/
+
+## Eclipse
+.project
+.classpath
+.settings/
+*.launch
+
+## NetBeans
+nbproject/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Cargo lock (optional - uncomment to ignore)
+# /src-tauri/Cargo.lock
