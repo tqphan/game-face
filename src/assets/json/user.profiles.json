@@ -1,0 +1,654 @@
+{
+	"selection": 0,
+	"items": [
+		{
+			"name": "chair - light",
+			"bindings": [
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "browInnerUp",
+						"threshold": "21",
+						"started": true,
+						"ahk": {
+							"start": "{f14 down}",
+							"stop": "{f14 up}"
+						},
+						"activated": true
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "eyeLookInLeft > 75",
+							"ahk": "b",
+							"debounce": 0,
+							"activated": false,
+							"time": 0
+						},
+						"stop": {
+							"logic": "eyeLookInLeft < 75",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookOutLeft",
+						"threshold": "76",
+						"started": true,
+						"ahk": {
+							"start": "{f19 down}",
+							"stop": "{f19 up}"
+						},
+						"activated": true
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookOutRight",
+						"threshold": "69",
+						"started": true,
+						"ahk": {
+							"start": "{f22 down}",
+							"stop": "{f22 up}"
+						},
+						"activated": true
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthPucker",
+						"threshold": "74",
+						"started": true,
+						"ahk": {
+							"start": "{f13 down}",
+							"stop": "{f13 up}"
+						},
+						"activated": true
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthSmileRight",
+						"threshold": "65",
+						"activated": true,
+						"ahk": {
+							"start": "{f23 down}",
+							"stop": "{f23 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthDimpleLeft",
+						"threshold": "13",
+						"activated": true,
+						"ahk": {
+							"start": "{f21 down}",
+							"stop": "{f21 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "bed - dark",
+			"bindings": [
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "browInnerUp",
+						"threshold": "8",
+						"activated": true,
+						"ahk": {
+							"start": "{lbutton down}",
+							"stop": "{lbutton  up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookOutLeft",
+						"threshold": 50,
+						"activated": true,
+						"ahk": {
+							"start": "{f19 down}",
+							"stop": "{f19 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookOutRight",
+						"threshold": "23",
+						"activated": true,
+						"ahk": {
+							"start": "{f22 down}",
+							"stop": "{f22 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthPucker",
+						"threshold": "79",
+						"activated": true,
+						"ahk": {
+							"start": "{rbutton down}",
+							"stop": " {rbutton up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "xbox",
+			"bindings": [
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "browInnerUp",
+						"threshold": "34",
+						"activated": true,
+						"ahk": {
+							"start": "{f15 down}",
+							"stop": "{f15 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthPucker",
+						"threshold": "35",
+						"activated": true,
+						"ahk": {
+							"start": "{f16 down}",
+							"stop": "{f16 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookOutLeft",
+						"threshold": "68",
+						"activated": true,
+						"ahk": {
+							"start": "{f17 down}",
+							"stop": "{f17 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookOutRight",
+						"threshold": "68",
+						"activated": true,
+						"ahk": {
+							"start": "{f18 down}",
+							"stop": "{f18 up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthSmileRight",
+						"threshold": 50,
+						"activated": true,
+						"ahk": {
+							"start": "",
+							"stop": ""
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "wasd",
+			"bindings": [
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "browInnerUp",
+						"threshold": 50,
+						"activated": true,
+						"ahk": {
+							"start": "{w down}",
+							"stop": "{w up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookInLeft",
+						"threshold": "66",
+						"activated": true,
+						"ahk": {
+							"start": "{a down}",
+							"stop": "{a up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "eyeLookInRight",
+						"threshold": "67",
+						"activated": true,
+						"ahk": {
+							"start": "{d down}",
+							"stop": "{d up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthPucker",
+						"threshold": 50,
+						"activated": true,
+						"ahk": {
+							"start": "{s down}",
+							"stop": "{s up}"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"ahk": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				}
+			]
+		}
+	]
+}

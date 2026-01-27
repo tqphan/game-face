@@ -1,0 +1,33 @@
+{
+    "name": "",
+    "simplified": true,
+    "enabled": true,
+    "simple": {
+        "blendshape": "_neutral",
+        "threshold": 50,
+        "activated": true,
+        "ahk": {
+            "start": "",
+            "stop": ""
+        }
+    },
+    "advance": {
+        "started": false,
+        "start": {
+            "logic": "",
+            "ahk": "",
+            "debounce": 0,
+            "activated": false,
+            "time": 0,
+            "fn": null
+        },
+        "stop": {
+            "logic": "",
+            "ahk": "",
+            "debounce": 0,
+            "activated": true,
+            "time": 0,
+            "fn": null
+        }
+    }
+}

@@ -1,0 +1,87 @@
+{
+    "version": 1,
+    "selection": 0,
+    "items": [
+        {
+            "name": "default",
+            "bindings": [
+                {
+                    "start": {
+                        "logic": "browInnerUp > 40",
+                        "ahk": "{f14 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "browInnerUp < 40",
+                        "ahk": "{f14 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                },
+                {
+                    "start": {
+                        "logic": "eyeLookOutLeft > 75",
+                        "ahk": "{f22 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "eyeLookOutLeft < 75",
+                        "ahk": "{f22 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                },
+                {
+                    "start": {
+                        "logic": "eyeLookOutRight > 75",
+                        "ahk": "{f19 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "eyeLookOutRight < 75",
+                        "ahk": "{f19 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                },
+                {
+                    "start": {
+                        "logic": "mouthPucker > 70",
+                        "ahk": "{f13 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "mouthPucker < 70",
+                        "ahk": "{f13 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                }
+            ]
+        }
+    ]
+}
