@@ -1,8 +1,21 @@
 use tauri::Manager;
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use enigo::{
+    Enigo, Settings,
+    agent::{Agent, Token},
+};
+use std::{
+    sync::{LazyLock, Mutex},
+};
+use ron::de::from_str;
+
+static ENIGO: LazyLock<Mutex<Enigo>> =
+    LazyLock::new(|| Mutex::new(Enigo::new(&Settings::default()).unwrap()));
+
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+fn enigo_execute_token(action: &str) -> Result<(), String> {
+    let token: Token = from_str(&action).map_err(|e| format!("Deserialization error: {}", e))?;
+    ENIGO.lock().unwrap().execute(&token).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 fn setup_window(window: tauri::WebviewWindow) {
@@ -27,7 +40,7 @@ fn setup_window(window: tauri::WebviewWindow) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![enigo_execute_token])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
             setup_window(window);

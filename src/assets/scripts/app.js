@@ -1,5 +1,5 @@
-// import { getCurrentWindow } from '@tauri-apps/api/window';
-// import { primaryMonitor } from '@tauri-apps/api/window';
+const { invoke } = window.__TAURI__.core;
+
 
 
 import {
@@ -111,18 +111,9 @@ const application = createApp({
 
             this.$refs["input-video"].requestVideoFrameCallback(this.predict);
         },
-        // async resizeAndCenter() {
-        //     const monitor = await primaryMonitor();
-        //     const window = getCurrentWindow();
-
-        //     if (monitor) {
-        //         const width = Math.floor(monitor.size.width * 0.75);
-        //         const height = Math.floor(monitor.size.height * 0.75);
-
-        //         await window.setSize({ width, height });
-        //         await window.center();
-        //     }
-        // },
+        async enigo_execute_token(str) {
+            await invoke("enigo_execute_token", { action: str });
+        },
         toggleWebcam() {
             if (this.predicting) {
                 const srcObject = this.$refs["input-video"].srcObject;
@@ -333,11 +324,15 @@ const application = createApp({
             if (binding.activated) {
                 if (binding.threshold < results[binding.blendshape]) {
                     // ahk.SimulateInput(binding.ahk.start, this.settings["allow.input.simulation"]);
+                    console.log("Enigo Start:", binding.enigo.start);
+                    this.enigo_execute_token(binding.enigo.start);
                     binding.activated = false;
                 }
             } else {
                 if (binding.threshold > results[binding.blendshape]) {
                     // ahk.SimulateInput(binding.ahk.stop, this.settings["allow.input.simulation"]);
+                    console.log("Enigo Stop:", binding.enigo.stop);
+                    this.enigo_execute_token(binding.enigo.stop);
                     binding.activated = true;
                 }
             }

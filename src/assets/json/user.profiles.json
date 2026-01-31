@@ -16,6 +16,10 @@
 							"start": "{f14 down}",
 							"stop": "{f14 up}"
 						},
+						"enigo": {
+							"start": "k(F14,p)",
+							"stop": "k(F14,r)"
+						},
 						"activated": true
 					},
 					"advance": {
@@ -47,6 +51,10 @@
 						"ahk": {
 							"start": "{f19 down}",
 							"stop": "{f19 up}"
+						},
+						"enigo": {
+							"start": "k(F19,p)",
+							"stop": "k(F19,r)"
 						},
 						"activated": true
 					},
@@ -82,6 +90,10 @@
 							"start": "{f22 down}",
 							"stop": "{f22 up}"
 						},
+						"enigo": {
+							"start": "k(F22,p)",
+							"stop": "k(F22,r)"
+						},
 						"activated": true
 					},
 					"advance": {
@@ -116,6 +128,10 @@
 							"start": "{f13 down}",
 							"stop": "{f13 up}"
 						},
+						"enigo": {
+							"start": "k(F13,p)",
+							"stop": "k(F13,r)"
+						},
 						"activated": true
 					},
 					"advance": {
@@ -145,11 +161,15 @@
 					"simple": {
 						"blendshape": "mouthSmileRight",
 						"threshold": "65",
-						"activated": true,
 						"ahk": {
 							"start": "{f23 down}",
 							"stop": "{f23 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F23,p)",
+							"stop": "k(F23,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -178,11 +198,15 @@
 					"simple": {
 						"blendshape": "mouthDimpleLeft",
 						"threshold": "13",
-						"activated": true,
 						"ahk": {
 							"start": "{f21 down}",
 							"stop": "{f21 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F21,p)",
+							"stop": "k(F21,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -216,11 +240,15 @@
 					"simple": {
 						"blendshape": "browInnerUp",
 						"threshold": "8",
-						"activated": true,
 						"ahk": {
 							"start": "{lbutton down}",
 							"stop": "{lbutton  up}"
-						}
+						},
+						"enigo": {
+							"start": "b(l,p)",
+							"stop": "b(l,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -249,11 +277,15 @@
 					"simple": {
 						"blendshape": "eyeLookOutLeft",
 						"threshold": 50,
-						"activated": true,
 						"ahk": {
 							"start": "{f19 down}",
 							"stop": "{f19 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F19,p)",
+							"stop": "k(F19,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -282,11 +314,15 @@
 					"simple": {
 						"blendshape": "eyeLookOutRight",
 						"threshold": "23",
-						"activated": true,
 						"ahk": {
 							"start": "{f22 down}",
 							"stop": "{f22 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F22,p)",
+							"stop": "k(F22,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -315,11 +351,15 @@
 					"simple": {
 						"blendshape": "mouthPucker",
 						"threshold": "79",
-						"activated": true,
 						"ahk": {
 							"start": "{rbutton down}",
 							"stop": " {rbutton up}"
-						}
+						},
+						"enigo": {
+							"start": "b(r,p)",
+							"stop": "b(r,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -353,11 +393,15 @@
 					"simple": {
 						"blendshape": "browInnerUp",
 						"threshold": "34",
-						"activated": true,
 						"ahk": {
 							"start": "{f15 down}",
 							"stop": "{f15 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F15,p)",
+							"stop": "k(F15,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -386,11 +430,15 @@
 					"simple": {
 						"blendshape": "mouthPucker",
 						"threshold": "35",
-						"activated": true,
 						"ahk": {
 							"start": "{f16 down}",
 							"stop": "{f16 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F16,p)",
+							"stop": "k(F16,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -419,11 +467,15 @@
 					"simple": {
 						"blendshape": "eyeLookOutLeft",
 						"threshold": "68",
-						"activated": true,
 						"ahk": {
 							"start": "{f17 down}",
 							"stop": "{f17 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F17,p)",
+							"stop": "k(F17,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -452,11 +504,15 @@
 					"simple": {
 						"blendshape": "eyeLookOutRight",
 						"threshold": "68",
-						"activated": true,
 						"ahk": {
 							"start": "{f18 down}",
 							"stop": "{f18 up}"
-						}
+						},
+						"enigo": {
+							"start": "k(F18,p)",
+							"stop": "k(F18,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -485,11 +541,15 @@
 					"simple": {
 						"blendshape": "mouthSmileRight",
 						"threshold": 50,
-						"activated": true,
 						"ahk": {
 							"start": "",
 							"stop": ""
-						}
+						},
+						"enigo": {
+							"start": "k(F19,p)",
+							"stop": "k(F19,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -523,11 +583,15 @@
 					"simple": {
 						"blendshape": "browInnerUp",
 						"threshold": 50,
-						"activated": true,
 						"ahk": {
 							"start": "{w down}",
 							"stop": "{w up}"
-						}
+						},
+						"enigo": {
+							"start": "k(w,p)",
+							"stop": "k(w,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -556,11 +620,15 @@
 					"simple": {
 						"blendshape": "eyeLookInLeft",
 						"threshold": "66",
-						"activated": true,
 						"ahk": {
 							"start": "{a down}",
 							"stop": "{a up}"
-						}
+						},
+						"enigo": {
+							"start": "k(a,p)",
+							"stop": "k(a,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -589,11 +657,15 @@
 					"simple": {
 						"blendshape": "eyeLookInRight",
 						"threshold": "67",
-						"activated": true,
 						"ahk": {
 							"start": "{d down}",
 							"stop": "{d up}"
-						}
+						},
+						"enigo": {
+							"start": "k(d,p)",
+							"stop": "k(d,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
@@ -622,11 +694,15 @@
 					"simple": {
 						"blendshape": "mouthPucker",
 						"threshold": 50,
-						"activated": true,
 						"ahk": {
 							"start": "{s down}",
 							"stop": "{s up}"
-						}
+						},
+						"enigo": {
+							"start": "k(s,p)",
+							"stop": "k(s,r)"
+						},
+						"activated": true
 					},
 					"advance": {
 						"started": false,
