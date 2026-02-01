@@ -1,7 +1,4 @@
 const { invoke } = window.__TAURI__.core;
-
-
-
 import {
     createApp,
     ref
@@ -11,7 +8,7 @@ import {
     FaceLandmarker,
     FilesetResolver,
     DrawingUtils
-} from "../mediapipe/vision_bundle.js";
+} from "../mediapipe/vision_bundle.mjs";
 
 import empty from "../json/empty.profile.json" with { type: "json" };
 import item from "../json/empty.item.json" with { type: "json" };
