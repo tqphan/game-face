@@ -37,8 +37,8 @@ const application = createApp({
         const ctx = this.$refs["output-canvas"].getContext("2d");
         this.mp.drawingUtils = new DrawingUtils(ctx);
         this.applyTheme();
-        this.loadSettings();
-        this.loadProfiles();
+        await this.loadSettings();
+        await this.loadProfiles();
         this.$refs["input-video"].requestVideoFrameCallback(this.predict);
         await this.init();
     },
@@ -70,7 +70,6 @@ const application = createApp({
             if (this.settings["auto.start.prediction"]) {
                 this.toggleWebcam();
             }
-            // this.resizeAndCenter();
         },
         async predict() {
             let results;
@@ -110,6 +109,24 @@ const application = createApp({
         },
         async enigo_execute_token(str) {
             await invoke("enigo_execute_token", { action: str });
+        },
+        async loadProfiles() {
+            const raw = await invoke('get_profiles');
+
+            if (raw === "{}") {
+                this.app.profiles = profiles;
+            }
+            else {
+                this.app.profiles = JSON.parse(raw);
+            }
+        },
+        async saveProfiles() {
+            try {
+                const parsed = JSON.stringify(this.app.profiles, null, 2);
+                await invoke('set_profiles', { profiles: parsed });
+            } catch (error) {
+                console.error(error);
+            }
         },
         toggleWebcam() {
             if (this.predicting) {
@@ -168,26 +185,27 @@ const application = createApp({
             console.log("69");
             return 5;
         },
-        exiting() {
+        async exiting() {
             if (this.settings["auto.save.profiles"]) {
-                this.saveProfiles();
+                await this.saveProfiles();
                 console.log("Profiles saved.");
             }
             if (this.settings["auto.save.settings"])
-                this.saveSettings();
+                await this.saveSettings();
             return true;
         },
-        loadSettings() {
+        async loadSettings() {
             try {
-                this.settings = json.settings;
+                const raw = await invoke('get_settings');
+                this.settings = JSON.parse(raw);
             } catch (error) {
                 console.error(error);
-                this.settings = structuredClone(settings);
+                this.settings = json.settings;
             }
         },
-        saveSettings() {
-            const parsed = JSON.stringify(this.settings, null, '\t');
-            // ahk.SaveSettings(parsed);
+        async saveSettings() {
+            const parsed = JSON.stringify(this.settings, null, 2);
+            await invoke('set_settings', { settings: parsed });
         },
         profileChanged(event) {
             const value = event.target.value;
@@ -227,23 +245,6 @@ const application = createApp({
                 this.app.profiles.items[this.app.profiles.selection].bindings.splice(index, 1);
             } catch (error) {
                 console.error(error);
-            }
-        },
-        saveProfiles() {
-            try {
-                const parsed = JSON.stringify(this.app.profiles, null, '\t');
-                // ahk.SaveProfiles(parsed);
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        loadProfiles() {
-            try {
-                this.app.profiles = profiles;
-                this.resetProfiles();
-            } catch (error) {
-                console.error(error);
-                this.app.profiles = structuredClone(empty);
             }
         },
         resetProfiles() {
@@ -320,15 +321,11 @@ const application = createApp({
         processSimpleBindings(binding, results) {
             if (binding.activated) {
                 if (binding.threshold < results[binding.blendshape]) {
-                    // ahk.SimulateInput(binding.ahk.start, this.settings["allow.input.simulation"]);
-                    console.log("Enigo Start:", binding.enigo.start);
                     this.enigo_execute_token(binding.enigo.start);
                     binding.activated = false;
                 }
             } else {
                 if (binding.threshold > results[binding.blendshape]) {
-                    // ahk.SimulateInput(binding.ahk.stop, this.settings["allow.input.simulation"]);
-                    console.log("Enigo Stop:", binding.enigo.stop);
                     this.enigo_execute_token(binding.enigo.stop);
                     binding.activated = true;
                 }

@@ -5,11 +5,8 @@
     "simple": {
         "blendshape": "_neutral",
         "threshold": 50,
+        "started": true,
         "activated": true,
-        "ahk": {
-            "start": "",
-            "stop": ""
-        },
         "enigo": {
             "start": "",
             "stop": ""
