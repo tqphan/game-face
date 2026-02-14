@@ -1,0 +1,36 @@
+{
+    "bindings": [
+        {
+            "name": "",
+            "simplified": true,
+            "simple": {
+                "blendshape": "_neutral",
+                "threshold": 50,
+                "started": false,
+                "ahk": {
+                    "start": "",
+                    "stop": ""
+                }
+            },
+            "advance": {
+                "started": false,
+                "start": {
+                    "logic": "",
+                    "ahk": "",
+                    "debounce": 0,
+                    "activated": false,
+                    "time": 0,
+                    "fn": null
+                },
+                "stop": {
+                    "logic": "",
+                    "ahk": "",
+                    "debounce": 0,
+                    "activated": false,
+                    "time": 0,
+                    "fn": null
+                }
+            }
+        }
+    ]
+}
