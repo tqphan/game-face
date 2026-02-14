@@ -13,11 +13,11 @@ from PySide6.QtCore import QUrl, QBuffer, QIODevice, QObject, Slot, Signal
 import sys
 import os
 import mimetypes
+import controller
 
 
 class Bridge(QObject):
-    data_from_python = Signal(str)
-
+    controller_pynput = controller.Controller()
     def _save_json(self, data, file_name):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         json_dir = os.path.join(script_dir, 'assets', 'json')
@@ -35,9 +35,9 @@ class Bridge(QObject):
     def save_settings(self, data):
         self._save_json(data, 'user.settings.json')
     
-    @Slot(str, result=str)
-    def process_data(self, data):
-        return f'Processed: {data}'
+    @Slot(str)
+    def execute_pynput_command(self, data):
+        controller_pynput.execute_command(data)
 
 
 class LocalFolderHandler(QWebEngineUrlSchemeHandler):
