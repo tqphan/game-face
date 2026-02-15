@@ -9,7 +9,7 @@ class Controller:
         
         # Compile regex patterns once for performance
         self.patterns = {
-            'function_call': re.compile(r'^(\w+)\((.*)\)$'),
+            'function_call': re.compile(r'^([\w.]+)\((.*)\)$'),
             'tuple': re.compile(r'^\((\d+),\s*(\d+)\)$'),
             'numbers': re.compile(r'^(-?\d+),\s*(-?\d+)$'),
             'single_number': re.compile(r'^(-?\d+)$'),
@@ -21,14 +21,16 @@ class Controller:
         # Allowed methods
         self.allowed_methods = {
             # Keyboard methods
-            'press': self._keyboard_press,
-            'release': self._keyboard_release,
-            'type': self._keyboard_type,
+            'keyboard.press': self._keyboard_press,
+            'keyboard.release': self._keyboard_release,
+            'keyboard.type': self._keyboard_type,
             # Mouse methods
-            'move': self._mouse_move,
-            'click': self._mouse_click,
-            'scroll': self._mouse_scroll,
-            'position': self._mouse_position,
+            'mouse.move': self._mouse_move,
+            'mouse.click': self._mouse_click,
+            'mouse.scroll': self._mouse_scroll,
+            'mouse.position': self._mouse_position,
+            'mouse.press': self._mouse_press,
+            'mouse.release': self._mouse_release,
         }
     
     def _keyboard_press(self, args):
@@ -112,6 +114,30 @@ class Controller:
             return True
         except ValueError:
             return False
+    
+    def _mouse_press(self, args):
+        """Handle mouse press - press(Button.left)"""
+        if len(args) != 1:
+            return False
+        
+        button = self._parse_button(args[0])
+        if button is None:
+            return False
+        
+        self.mouse.press(button)
+        return True
+    
+    def _mouse_release(self, args):
+        """Handle mouse release - release(Button.left)"""
+        if len(args) != 1:
+            return False
+        
+        button = self._parse_button(args[0])
+        if button is None:
+            return False
+        
+        self.mouse.release(button)
+        return True
     
     def _parse_key(self, key_str):
         """Parse keyboard key"""
@@ -245,7 +271,7 @@ class Controller:
         return self._mouse_position([x, y])
     
     def _execute_function_call(self, command_str):
-        """Handle function call like: press(Key.space)"""
+        """Handle function call like: press(Key.space) or mouse.press(Button.left)"""
         match = self.patterns['function_call'].match(command_str)
         
         if not match:
@@ -255,17 +281,36 @@ class Controller:
         method_name = match.group(1)
         arg_str = match.group(2)
         
-        # Check if method is allowed
-        if method_name not in self.allowed_methods:
-            print(f"Method '{method_name}' not allowed")
-            return False
+        # Check if method is allowed (support both 'press' and 'mouse.press' formats)
+        if method_name in self.allowed_methods:
+            # Direct match (e.g., 'mouse.press')
+            full_method_name = method_name
+        else:
+            # Try prefixing with 'keyboard.' or 'mouse.'
+            # Determine which prefix based on method name
+            keyboard_methods = {'press', 'release', 'type'}
+            mouse_methods = {'move', 'click', 'scroll', 'position'}
+            
+            if method_name in keyboard_methods:
+                full_method_name = f'keyboard.{method_name}'
+            elif method_name in mouse_methods:
+                full_method_name = f'mouse.{method_name}'
+            else:
+                # Could be mouse.press, mouse.release which aren't in the simple list
+                print(f"Method '{method_name}' not allowed")
+                return False
+            
+            # Verify the prefixed method exists
+            if full_method_name not in self.allowed_methods:
+                print(f"Method '{method_name}' not allowed")
+                return False
         
         # Parse arguments
         args = self._parse_arguments(arg_str)
         
         # Execute the method
         try:
-            return self.allowed_methods[method_name](args)
+            return self.allowed_methods[full_method_name](args)
         except Exception as e:
             print(f"Error executing {command_str}: {e}")
             return False

@@ -2,7 +2,7 @@
     "en": {
         "NAME": "English",
         "HELLO": "Hello!",
-        "WELCOME": "Welcome to face.ahk",
+        "WELCOME": "Welcome to game-face",
         "SETTINGS": "Settings",
         "SAVE_CHANGES": "Save Changes",
         "BLENDSHAPES": "Blendshapes",
@@ -24,7 +24,7 @@
         "CREATE_BINDING": "Create Binding",
         "REMOVE_BINDING": "Remove Binding",
         "JAVASCRIPT_EXPRESSION": "JavaScript Expression",
-        "SENDINPUT_EXPRESSION": "SendInput Expression",
+        "PYNPUT_EXPRESSION": "Pynput Expression",
         "INVALID_EXPRESSION": "Invalid Expression",
         "DEBOUNCE": "Debounce",
         "MILLISECONDS": " ms",

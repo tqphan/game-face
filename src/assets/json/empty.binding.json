@@ -6,11 +6,11 @@
         "blendshape": "_neutral",
         "threshold": 50,
         "activated": true,
-        "ahk": {
+        "pynput": {
             "start": "",
             "stop": ""
         },
-        "enigo": {
+        "pynput": {
             "start": "",
             "stop": ""
         }
@@ -19,7 +19,7 @@
         "started": false,
         "start": {
             "logic": "",
-            "ahk": "",
+            "pynput": "",
             "debounce": 0,
             "activated": false,
             "time": 0,
@@ -27,7 +27,7 @@
         },
         "stop": {
             "logic": "",
-            "ahk": "",
+            "pynput": "",
             "debounce": 0,
             "activated": true,
             "time": 0,

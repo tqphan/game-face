@@ -13,9 +13,9 @@ new QWebChannel(qt.webChannelTransport, function (channel) {
     window.bridge = channel.objects.bridge;
 });
 
-import { WebSocketClient } from './websocket-client.js';
-let client = new WebSocketClient('ws://127.0.0.1:8080', 5000);
-client.connect();
+// import { WebSocketClient } from './websocket-client.js';
+// let client = new WebSocketClient('ws://127.0.0.1:8080', 5000);
+// client.connect();
 
 import empty from "../json/empty.profile.json" with { type: "json" };
 import item from "../json/empty.item.json" with { type: "json" };
@@ -102,21 +102,18 @@ const application = createApp({
                 this.processBindings(this.app.profiles.items[value].bindings, this.mp.bs, time);
 
             results?.faceLandmarks?.forEach(landmarks => {
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, { color: "#27a912ff", lineWidth: 0.25 });
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE, { color: "#cc2626ff" });
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW, { color: "#FF3030" });
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYE, { color: "#00ffff" });
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW, { color: "#00ffff" });
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_FACE_OVAL, { color: "#E0E0E0" });
-                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LIPS, { color: "#0b006fff" });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, { color: "#ffffffff", lineWidth: 0.25 });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW, { color: "#baff98ff" });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE, { color: "#ff06bdff" });
                 this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_IRIS, { color: "#FF3030" });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW, { color: "#fff700ff" });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYE, { color: "#004242ff" });
                 this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_IRIS, { color: "#00ffff" });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_FACE_OVAL, { color: "#12ff32ff" });
+                this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LIPS, { color: "#0b006fff" });
             });
 
             this.$refs["input-video"].requestVideoFrameCallback(this.predict);
-        },
-        async enigo_execute_token(str) {
-            await invoke("enigo_execute_token", { action: str });
         },
         toggleWebcam() {
             if (this.predicting) {
@@ -166,10 +163,8 @@ const application = createApp({
         },
         themeChanged(event) {
             this.applyTheme();
-            // ahk.SetDarkMode(this.settings.theme === "dark");
         },
         shortcutChanged() {
-            // ahk.SetShortcut(this.settings["auto.start.with.windows"]);
         },
         testing() {
             console.log("69");
@@ -311,12 +306,12 @@ const application = createApp({
                             binding.time = time;
                         } else if (time - binding.time > binding.debounce) {
                             // Debounce period elapsed - activate
-                            // ahk.SimulateInput(binding.ahk, this.settings["allow.input.simulation"]);
+                            bridge.execute_pynput_command(binding.pynput);
                             binding.activated = true;
                         }
                     } else {
                         // Immediate activation for non-debounced bindings
-                        // ahk.SimulateInput(binding.ahk, this.settings["allow.input.simulation"]);
+                        bridge.execute_pynput_command(binding.pynput);
                         binding.activated = true;
                     }
                 }
@@ -331,20 +326,12 @@ const application = createApp({
         processSimpleBindings(binding, results) {
             if (binding.activated) {
                 if (binding.threshold < results[binding.blendshape]) {
-                    // ahk.SimulateInput(binding.ahk.start, this.settings["allow.input.simulation"]);
-                    // console.log("Enigo Start:", binding.enigo.start);
-                    // this.enigo_execute_token(binding.enigo.start);
-                    if (client)
-                        client.send(binding.enigo.start);
+                    bridge.execute_pynput_command(binding.pynput.start);
                     binding.activated = false;
                 }
             } else {
                 if (binding.threshold > results[binding.blendshape]) {
-                    // ahk.SimulateInput(binding.ahk.stop, this.settings["allow.input.simulation"]);
-                    // console.log("Enigo Stop:", binding.enigo.stop);
-                    // this.enigo_execute_token(binding.enigo.stop);
-                    if (client)
-                        client.send(binding.enigo.stop);
+                    bridge.execute_pynput_command(binding.pynput.stop);
                     binding.activated = true;
                 }
             }

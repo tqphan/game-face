@@ -37,7 +37,7 @@ class Bridge(QObject):
     
     @Slot(str)
     def execute_pynput_command(self, data):
-        controller_pynput.execute_command(data)
+        self.controller_pynput.execute_command(data)
 
 
 class LocalFolderHandler(QWebEngineUrlSchemeHandler):

@@ -153,9 +153,9 @@
                       <div class="my-3"></div>
                       <div class="mb-3 text-start">
                         <label class="form-label">
-                          {{ translations[settings.language].SENDINPUT_EXPRESSION }}
+                          {{ translations[settings.language].PYNPUT_EXPRESSION }}
                         </label>
-                        <input class="form-control" spellcheck="false" v-model="binding.advance.start.ahk">
+                        <input class="form-control" spellcheck="false" v-model="binding.advance.start.pynput">
                         <div class="invalid-feedback">
                           <!-- Please enter a message in the textarea. :class="{is-invalid: (binding.start.fn)}" -->
                         </div>
@@ -191,9 +191,9 @@
                       <div class="my-3"></div>
                       <div class="mb-3 text-start">
                         <label class="form-label">
-                          {{ translations[settings.language].SENDINPUT_EXPRESSION }}
+                          {{ translations[settings.language].PYNPUT_EXPRESSION }}
                         </label>
-                        <input class="form-control" spellcheck="false" v-model="binding.advance.stop.ahk">
+                        <input class="form-control" spellcheck="false" v-model="binding.advance.stop.pynput">
                         <div class="invalid-feedback">
                           <!-- Please enter a message in the textarea. -->
                         </div>
@@ -279,10 +279,10 @@
                       </select>
                     </div>
                     <div class="col-4">
-                      <input class="form-control" spellcheck="false" v-model="binding.simple.enigo.start">
+                      <input class="form-control" spellcheck="false" v-model="binding.simple.pynput.start">
                     </div>
                     <div class="col-4">
-                      <input class="form-control" spellcheck="false" v-model="binding.simple.enigo.stop">
+                      <input class="form-control" spellcheck="false" v-model="binding.simple.pynput.stop">
                     </div>
                   </div>
                 </div>

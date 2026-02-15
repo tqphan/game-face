@@ -2,235 +2,6 @@
 	"selection": 0,
 	"items": [
 		{
-			"name": "chair - light",
-			"bindings": [
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "browInnerUp",
-						"threshold": "43",
-						"started": true,
-						"ahk": {
-							"start": "{f14 down}",
-							"stop": "{f14 up}"
-						},
-						"enigo": {
-							"start": "k(F14,p)",
-							"stop": "k(F14,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "eyeLookInLeft > 75",
-							"ahk": "b",
-							"debounce": 0,
-							"activated": false,
-							"time": 0
-						},
-						"stop": {
-							"logic": "eyeLookInLeft < 75",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookOutLeft",
-						"threshold": "76",
-						"started": true,
-						"ahk": {
-							"start": "{f19 down}",
-							"stop": "{f19 up}"
-						},
-						"enigo": {
-							"start": "k(F19,p)",
-							"stop": "k(F19,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookOutRight",
-						"threshold": "69",
-						"started": true,
-						"ahk": {
-							"start": "{f22 down}",
-							"stop": "{f22 up}"
-						},
-						"enigo": {
-							"start": "k(F22,p)",
-							"stop": "k(F22,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "mouthPucker",
-						"threshold": "74",
-						"started": true,
-						"ahk": {
-							"start": "{f13 down}",
-							"stop": "{f13 up}"
-						},
-						"enigo": {
-							"start": "k(F13,p)",
-							"stop": "k(F13,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "mouthSmileRight",
-						"threshold": "65",
-						"ahk": {
-							"start": "{f23 down}",
-							"stop": "{f23 up}"
-						},
-						"enigo": {
-							"start": "k(F23,p)",
-							"stop": "k(F23,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "mouthDimpleLeft",
-						"threshold": "13",
-						"ahk": {
-							"start": "{f21 down}",
-							"stop": "{f21 up}"
-						},
-						"enigo": {
-							"start": "k(F21,p)",
-							"stop": "k(F21,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				}
-			]
-		},
-		{
 			"name": "bed - dark",
 			"bindings": [
 				{
@@ -239,14 +10,14 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "browInnerUp",
-						"threshold": "8",
-						"ahk": {
+						"threshold": "19",
+						"pynput": {
 							"start": "{lbutton down}",
 							"stop": "{lbutton  up}"
 						},
-						"enigo": {
-							"start": "b(l,p)",
-							"stop": "b(l,r)"
+						"pynput": {
+							"start": "mouse.press(Button.left)",
+							"stop": "mouse.release(Button.left)"
 						},
 						"activated": true
 					},
@@ -254,7 +25,7 @@
 						"started": false,
 						"start": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": false,
 							"time": 0,
@@ -262,7 +33,7 @@
 						},
 						"stop": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": true,
 							"time": 0,
@@ -276,14 +47,14 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "eyeLookOutLeft",
-						"threshold": 50,
-						"ahk": {
+						"threshold": "79",
+						"pynput": {
 							"start": "{f19 down}",
 							"stop": "{f19 up}"
 						},
-						"enigo": {
-							"start": "k(F19,p)",
-							"stop": "k(F19,r)"
+						"pynput": {
+							"start": "keyboard.press(Key.space)",
+							"stop": "keyboard.release(Key.space)"
 						},
 						"activated": true
 					},
@@ -291,7 +62,7 @@
 						"started": false,
 						"start": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": false,
 							"time": 0,
@@ -299,7 +70,7 @@
 						},
 						"stop": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": true,
 							"time": 0,
@@ -313,14 +84,14 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "eyeLookOutRight",
-						"threshold": "23",
-						"ahk": {
+						"threshold": "79",
+						"pynput": {
 							"start": "{f22 down}",
 							"stop": "{f22 up}"
 						},
-						"enigo": {
-							"start": "k(F22,p)",
-							"stop": "k(F22,r)"
+						"pynput": {
+							"start": "keyboard.press(Key.space)",
+							"stop": "keyboard.release(Key.space)"
 						},
 						"activated": true
 					},
@@ -328,7 +99,7 @@
 						"started": false,
 						"start": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": false,
 							"time": 0,
@@ -336,7 +107,7 @@
 						},
 						"stop": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": true,
 							"time": 0,
@@ -351,13 +122,13 @@
 					"simple": {
 						"blendshape": "mouthPucker",
 						"threshold": "79",
-						"ahk": {
+						"pynput": {
 							"start": "{rbutton down}",
 							"stop": " {rbutton up}"
 						},
-						"enigo": {
-							"start": "b(r,p)",
-							"stop": "b(r,r)"
+						"pynput": {
+							"start": "keyboard.press(Key.space)",
+							"stop": "keyboard.release(Key.space)"
 						},
 						"activated": true
 					},
@@ -365,7 +136,7 @@
 						"started": false,
 						"start": {
 							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": false,
 							"time": 0,
@@ -373,350 +144,7 @@
 						},
 						"stop": {
 							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "xbox",
-			"bindings": [
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "browInnerUp",
-						"threshold": "34",
-						"ahk": {
-							"start": "{f15 down}",
-							"stop": "{f15 up}"
-						},
-						"enigo": {
-							"start": "k(F15,p)",
-							"stop": "k(F15,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "mouthPucker",
-						"threshold": "35",
-						"ahk": {
-							"start": "{f16 down}",
-							"stop": "{f16 up}"
-						},
-						"enigo": {
-							"start": "k(F16,p)",
-							"stop": "k(F16,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookOutLeft",
-						"threshold": "68",
-						"ahk": {
-							"start": "{f17 down}",
-							"stop": "{f17 up}"
-						},
-						"enigo": {
-							"start": "k(F17,p)",
-							"stop": "k(F17,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookOutRight",
-						"threshold": "68",
-						"ahk": {
-							"start": "{f18 down}",
-							"stop": "{f18 up}"
-						},
-						"enigo": {
-							"start": "k(F18,p)",
-							"stop": "k(F18,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "mouthSmileRight",
-						"threshold": 50,
-						"ahk": {
-							"start": "",
-							"stop": ""
-						},
-						"enigo": {
-							"start": "k(F19,p)",
-							"stop": "k(F19,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "wasd",
-			"bindings": [
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "browInnerUp",
-						"threshold": 50,
-						"ahk": {
-							"start": "{w down}",
-							"stop": "{w up}"
-						},
-						"enigo": {
-							"start": "k(w,p)",
-							"stop": "k(w,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookInLeft",
-						"threshold": "66",
-						"ahk": {
-							"start": "{a down}",
-							"stop": "{a up}"
-						},
-						"enigo": {
-							"start": "k(a,p)",
-							"stop": "k(a,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookInRight",
-						"threshold": "67",
-						"ahk": {
-							"start": "{d down}",
-							"stop": "{d up}"
-						},
-						"enigo": {
-							"start": "k(d,p)",
-							"stop": "k(d,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "mouthPucker",
-						"threshold": 50,
-						"ahk": {
-							"start": "{s down}",
-							"stop": "{s up}"
-						},
-						"enigo": {
-							"start": "k(s,p)",
-							"stop": "k(s,r)"
-						},
-						"activated": true
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"ahk": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"ahk": "",
+							"pynput": "",
 							"debounce": 0,
 							"activated": true,
 							"time": 0,
