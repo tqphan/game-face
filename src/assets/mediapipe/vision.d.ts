@@ -699,133 +699,6 @@ export declare interface FaceLandmarkerResult {
     facialTransformationMatrixes: Matrix[];
 }
 
-/** Performs face stylization on images. */
-export declare class FaceStylizer extends VisionTaskRunner {
-    /**
-     * Initializes the Wasm runtime and creates a new Face Stylizer from the
-     * provided options.
-     * @export
-     * @param wasmFileset A configuration object that provides the location of
-     *     the Wasm binary and its loader.
-     * @param faceStylizerOptions The options for the Face Stylizer. Note
-     *     that either a path to the model asset or a model buffer needs to be
-     *     provided (via `baseOptions`).
-     */
-    static createFromOptions(wasmFileset: WasmFileset, faceStylizerOptions: FaceStylizerOptions): Promise<FaceStylizer>;
-    /**
-     * Initializes the Wasm runtime and creates a new Face Stylizer based on
-     * the provided model asset buffer.
-     * @export
-     * @param wasmFileset A configuration object that provides the location of
-     *     the Wasm binary and its loader.
-     * @param modelAssetBuffer An array or a stream containing a binary
-     *    representation of the model.
-     */
-    static createFromModelBuffer(wasmFileset: WasmFileset, modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader): Promise<FaceStylizer>;
-    /**
-     * Initializes the Wasm runtime and creates a new Face Stylizer based on
-     * the path to the model asset.
-     * @export
-     * @param wasmFileset A configuration object that provides the location of
-     *     the Wasm binary and its loader.
-     * @param modelAssetPath The path to the model asset.
-     */
-    static createFromModelPath(wasmFileset: WasmFileset, modelAssetPath: string): Promise<FaceStylizer>;
-    private constructor();
-    /**
-     * Sets new options for the Face Stylizer.
-     *
-     * Calling `setOptions()` with a subset of options only affects those
-     * options. You can reset an option back to its default value by
-     * explicitly setting it to `undefined`.
-     *
-     * @export
-     * @param options The options for the Face Stylizer.
-     */
-    setOptions(options: FaceStylizerOptions): Promise<void>;
-    /**
-     * Performs face stylization on the provided single image and invokes the
-     * callback with result. The method returns synchronously once the callback
-     * returns. Only use this method when the FaceStylizer is created with the
-     * image running mode.
-     *
-     * @param image An image to process.
-     * @param callback The callback that is invoked with the stylized image or
-     *    `null` if no face was detected. The lifetime of the returned data is
-     *     only guaranteed for the duration of the callback.
-     */
-    stylize(image: ImageSource, callback: FaceStylizerCallback): void;
-    /**
-     * Performs face stylization on the provided single image and invokes the
-     * callback with result. The method returns synchronously once the callback
-     * returns. Only use this method when the FaceStylizer is created with the
-     * image running mode.
-     *
-     * The 'imageProcessingOptions' parameter can be used to specify one or all
-     * of:
-     *  - the rotation to apply to the image before performing stylization, by
-     *    setting its 'rotationDegrees' property.
-     *  - the region-of-interest on which to perform stylization, by setting its
-     *   'regionOfInterest' property. If not specified, the full image is used.
-     *  If both are specified, the crop around the region-of-interest is extracted
-     *  first, then the specified rotation is applied to the crop.
-     *
-     * @param image An image to process.
-     * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
-     *    to process the input image before running inference.
-     * @param callback The callback that is invoked with the stylized image or
-     *    `null` if no face was detected. The lifetime of the returned data is
-     *    only guaranteed for the duration of the callback.
-     */
-    stylize(image: ImageSource, imageProcessingOptions: ImageProcessingOptions, callback: FaceStylizerCallback): void;
-    /**
-     * Performs face stylization on the provided single image and returns the
-     * result. This method creates a copy of the resulting image and should not be
-     * used in high-throughput applications. Only use this method when the
-     * FaceStylizer is created with the image running mode.
-     *
-     * @param image An image to process.
-     * @return A stylized face or `null` if no face was detected. The result is
-     *     copied to avoid lifetime issues.
-     */
-    stylize(image: ImageSource): MPImage | null;
-    /**
-     * Performs face stylization on the provided single image and returns the
-     * result. This method creates a copy of the resulting image and should not be
-     * used in high-throughput applications. Only use this method when the
-     * FaceStylizer is created with the image running mode.
-     *
-     * The 'imageProcessingOptions' parameter can be used to specify one or all
-     * of:
-     *  - the rotation to apply to the image before performing stylization, by
-     *    setting its 'rotationDegrees' property.
-     *  - the region-of-interest on which to perform stylization, by setting its
-     *   'regionOfInterest' property. If not specified, the full image is used.
-     *  If both are specified, the crop around the region-of-interest is extracted
-     *  first, then the specified rotation is applied to the crop.
-     *
-     * @param image An image to process.
-     * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
-     *    to process the input image before running inference.
-     * @return A stylized face or `null` if no face was detected. The result is
-     *     copied to avoid lifetime issues.
-     */
-    stylize(image: ImageSource, imageProcessingOptions: ImageProcessingOptions): MPImage | null;
-}
-
-/**
- * A callback that receives an `MPImage` object from the face stylizer, or
- * `null` if no face was detected. The lifetime of the underlying data is
- * limited to the duration of the callback. If asynchronous processing is
- * needed, all data needs to be copied before the callback returns (via
- * `image.clone()`).
- */
-export declare type FaceStylizerCallback = (image: MPImage | null) => void;
-
-/** Options to configure the MediaPipe Face Stylizer Task */
-export declare interface FaceStylizerOptions extends VisionTaskOptions {
-}
-
 /**
  * Resolves the files required for the MediaPipe Task APIs.
  *
@@ -2080,7 +1953,7 @@ export declare class InteractiveSegmenter extends VisionTaskRunner {
 export declare type InteractiveSegmenterCallback = (result: InteractiveSegmenterResult) => void;
 
 /** Options to configure the MediaPipe Interactive Segmenter Task */
-export declare interface InteractiveSegmenterOptions extends TaskRunnerOptions {
+export declare interface InteractiveSegmenterOptions extends VisionTaskOptions {
     /** Whether to output confidence masks. Defaults to true. */
     outputConfidenceMasks?: boolean | undefined;
     /** Whether to output the category masks. Defaults to false. */

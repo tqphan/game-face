@@ -7,7 +7,7 @@ import {
     FaceLandmarker,
     FilesetResolver,
     DrawingUtils
-} from "../mediapipe/vision_bundle.js";
+} from "../mediapipe/vision_bundle.mjs";
 
 new QWebChannel(qt.webChannelTransport, function (channel) {
     window.bridge = channel.objects.bridge;
