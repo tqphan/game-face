@@ -10,11 +10,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "browInnerUp",
-						"threshold": "19",
-						"pynput": {
-							"start": "{lbutton down}",
-							"stop": "{lbutton  up}"
-						},
+						"threshold": 19,
 						"pynput": {
 							"start": "mouse.press(Button.left)",
 							"stop": "mouse.release(Button.left)"
@@ -47,11 +43,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "eyeLookOutLeft",
-						"threshold": "79",
-						"pynput": {
-							"start": "{f19 down}",
-							"stop": "{f19 up}"
-						},
+						"threshold": 79,
 						"pynput": {
 							"start": "keyboard.press(Key.space)",
 							"stop": "keyboard.release(Key.space)"
@@ -84,11 +76,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "eyeLookOutRight",
-						"threshold": "79",
-						"pynput": {
-							"start": "{f22 down}",
-							"stop": "{f22 up}"
-						},
+						"threshold": 79,
 						"pynput": {
 							"start": "keyboard.press(Key.space)",
 							"stop": "keyboard.release(Key.space)"
@@ -121,11 +109,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "mouthPucker",
-						"threshold": "79",
-						"pynput": {
-							"start": "{rbutton down}",
-							"stop": " {rbutton up}"
-						},
+						"threshold": 79,
 						"pynput": {
 							"start": "keyboard.press(Key.space)",
 							"stop": "keyboard.release(Key.space)"
