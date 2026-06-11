@@ -1,6 +1,7 @@
 {
     "theme": "dark",
     "language": "en",
+	"webcam.preference": null,
     "webcam.opacity": 1.0,
     "landmarks.opacity": 1.0,
     "auto.start.prediction": false,

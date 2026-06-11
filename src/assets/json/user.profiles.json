@@ -10,7 +10,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "browInnerUp",
-						"threshold": 19,
+						"threshold": "37",
 						"pynput": {
 							"start": "mouse.press(Button.left)",
 							"stop": "mouse.release(Button.left)"
@@ -43,10 +43,10 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "eyeLookOutLeft",
-						"threshold": 79,
+						"threshold": "78",
 						"pynput": {
-							"start": "keyboard.press(Key.space)",
-							"stop": "keyboard.release(Key.space)"
+							"start": "keyboard.press(numpad_4)",
+							"stop": "keyboard.release(numpad_4)"
 						},
 						"activated": true
 					},
@@ -78,8 +78,8 @@
 						"blendshape": "eyeLookOutRight",
 						"threshold": 79,
 						"pynput": {
-							"start": "keyboard.press(Key.space)",
-							"stop": "keyboard.release(Key.space)"
+							"start": "keyboard.press(numpad_6)",
+							"stop": "keyboard.release(numpad_6)"
 						},
 						"activated": true
 					},
@@ -109,12 +109,45 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "mouthPucker",
-						"threshold": 79,
+						"threshold": "35",
 						"pynput": {
-							"start": "keyboard.press(Key.space)",
-							"stop": "keyboard.release(Key.space)"
+							"start": "keyboard.press(numpad_8)",
+							"stop": "keyboard.release(numpad_8)"
 						},
 						"activated": true
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"pynput": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"pynput": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthDimpleLeft",
+						"threshold": "21",
+						"activated": true,
+						"pynput": {
+							"start": "keyboard.press(numpad_2)",
+							"stop": "keyboard.release(numpad_2)"
+						}
 					},
 					"advance": {
 						"started": false,

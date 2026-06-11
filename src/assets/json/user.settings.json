@@ -1,6 +1,8 @@
 {
 	"theme": "dark",
 	"language": "en",
+	"webcam.preference": null,
+	"webcam.deviceId": "c76b60892b07760ec80164598373e250872f90bf9efca079e1c8c41071dfae01",
 	"webcam.opacity": "0",
 	"landmarks.opacity": 1,
 	"auto.start.prediction": true,

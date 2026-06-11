@@ -36,8 +36,9 @@ const application = createApp({
         const settings = ref(structuredClone(json.settings));
         const translations = ref(structuredClone(json.translations));
         const updateAvailable = ref(false);
+        const cameras = ref([]);
         return {
-            app, mp: mediapipe, predicting, settings, translations, updateAvailable
+            app, mp: mediapipe, predicting, settings, translations, updateAvailable, cameras
         };
     },
     async mounted() {
@@ -46,6 +47,7 @@ const application = createApp({
         this.applyTheme();
         this.loadSettings();
         this.loadProfiles();
+        this.enumerateCameras();
         this.$refs["input-video"].requestVideoFrameCallback(this.predict);
         await this.init();
     },
@@ -115,6 +117,36 @@ const application = createApp({
 
             this.$refs["input-video"].requestVideoFrameCallback(this.predict);
         },
+        async enumerateCameras() {
+            try {
+                // Request permission first so labels are populated
+                await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                this.cameras = devices.filter(d => d.kind === "videoinput");
+                if (!this.settings["webcam.deviceId"] && this.cameras.length > 0) {
+                    this.settings["webcam.deviceId"] = this.cameras[0].deviceId;
+                }
+                navigator.mediaDevices.addEventListener("devicechange", this.onDeviceChange);
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        async onDeviceChange() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const newCameras = devices.filter(d => d.kind === "videoinput");
+
+            // Currently selected camera was unplugged
+            const stillExists = newCameras.some(c => c.deviceId === this.settings["webcam.deviceId"]);
+            if (this.predicting && !stillExists) {
+                this.toggleWebcam(); // stop
+                this.settings["webcam.deviceId"] = newCameras[0]?.deviceId ?? null;
+                if (this.settings["webcam.deviceId"]) this.toggleWebcam(); // restart on first available
+            } else if (!this.settings["webcam.deviceId"] && newCameras.length > 0) {
+                this.settings["webcam.deviceId"] = newCameras[0].deviceId;
+            }
+
+            this.cameras = newCameras;
+        },
         toggleWebcam() {
             if (this.predicting) {
                 const srcObject = this.$refs["input-video"].srcObject;
@@ -128,7 +160,9 @@ const application = createApp({
             else {
                 const constraints = (window.constraints = {
                     audio: false,
-                    video: true
+                    video: this.settings["webcam.deviceId"]
+                        ? { deviceId: { exact: this.settings["webcam.deviceId"] } }
+                        : true
                 });
 
                 navigator.mediaDevices
@@ -193,6 +227,11 @@ const application = createApp({
                 bridge.save_settings(parsed);
             } catch (error) {
                 console.error(error);
+            }
+            this.applyTheme();
+            if (this.predicting) {
+                this.toggleWebcam(); // stop
+                this.toggleWebcam(); // restart with new settings
             }
         },
         profileChanged(event) {

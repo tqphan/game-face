@@ -324,12 +324,21 @@
                     <option value="en">{{ translations[settings.language].LANGUAGE_ENGLISH }}</option>
                   </select>
                 </div>
+                <!-- Camera Dropdown -->
+                <div class="mb-4">
+                  <label class="form-label">Camera</label>
+                  <select class="form-select" v-model="settings['webcam.deviceId']">
+                    <option v-for="cam in cameras" :key="cam.deviceId" :value="cam.deviceId">
+                      {{ cam.label || 'Camera ' + (cameras.indexOf(cam) + 1) }}
+                    </option>
+                  </select>
+                </div>
                 <!-- Theme Dropdown -->
                 <div class="mb-4">
                   <label for="themeSelect" class="form-label">
                     {{ translations[settings.language].THEME }}
                   </label>
-                  <select class="form-select" v-model="settings.theme" @change="themeChanged">
+                  <select class="form-select" v-model="settings.theme">
                     <option value="light">{{ translations[settings.language].THEME_LIGHT }}</option>
                     <option value="dark">{{ translations[settings.language].THEME_DARK}}</option>
                   </select>
