@@ -47,8 +47,7 @@ const application = createApp({
         this.applyTheme();
         this.loadSettings();
         this.loadProfiles();
-        this.enumerateCameras();
-        this.$refs["input-video"].requestVideoFrameCallback(this.predict);
+        await this.enumerateCameras();
         await this.init();
     },
     methods: {
@@ -82,13 +81,19 @@ const application = createApp({
             // this.resizeAndCenter();
         },
         async predict() {
+            const video = this.$refs["input-video"];
+            // Exit the callback chain when the stream is gone or the model isn't ready.
+            // Without this, a callback queued before a stop would re-arm itself and run
+            // alongside the chain started by the next restart, double-firing bindings.
+            if (!video?.srcObject || !this.mp.faceLandmarker) return;
+
             let results;
             const time = performance.now();
             try {
-                results = this.mp.faceLandmarker.detectForVideo(this.$refs["input-video"], time);
+                results = this.mp.faceLandmarker.detectForVideo(video, time);
             } catch (error) {
                 console.error(error);
-                this.$refs["input-video"].requestVideoFrameCallback(this.predict);
+                video.requestVideoFrameCallback(this.predict);
                 return;
             }
             const rect = this.$refs["output-canvas"].parentNode.getBoundingClientRect();
@@ -115,13 +120,16 @@ const application = createApp({
                 this.mp.drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LIPS, { color: "#0b006fff" });
             });
 
-            this.$refs["input-video"].requestVideoFrameCallback(this.predict);
+            video.requestVideoFrameCallback(this.predict);
         },
         async enumerateCameras() {
             try {
-                // Request permission first so labels are populated
-                await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                // Request permission first so labels are populated. This opens a real
+                // stream on the DEFAULT camera, so it must be released once we have the
+                // labels - otherwise that device stays on for the life of the page.
+                const probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 const devices = await navigator.mediaDevices.enumerateDevices();
+                probe.getTracks().forEach(track => track.stop());
                 this.cameras = devices.filter(d => d.kind === "videoinput");
                 if (!this.settings["webcam.deviceId"] && this.cameras.length > 0) {
                     this.settings["webcam.deviceId"] = this.cameras[0].deviceId;
@@ -148,14 +156,16 @@ const application = createApp({
             this.cameras = newCameras;
         },
         toggleWebcam() {
+            const video = this.$refs["input-video"];
             if (this.predicting) {
-                const srcObject = this.$refs["input-video"].srcObject;
+                const srcObject = video.srcObject;
                 if (srcObject && typeof srcObject.getTracks === "function") {
-                    let tracks = srcObject.getTracks();
-                    tracks.forEach(track => {
-                        track.stop();
-                    });
+                    srcObject.getTracks().forEach(track => track.stop());
                 }
+                // Detach the dead stream. Stopped tracks alone leave the element
+                // holding an ended MediaStream, which stalls requestVideoFrameCallback.
+                video.srcObject = null;
+                this.predicting = false;
             }
             else {
                 const constraints = (window.constraints = {
@@ -168,13 +178,18 @@ const application = createApp({
                 navigator.mediaDevices
                     .getUserMedia(constraints)
                     .then(stream => {
-                        this.$refs["input-video"].srcObject = stream;
+                        video.srcObject = stream;
+                        // Only now is the camera actually live.
+                        this.predicting = true;
+                        video.requestVideoFrameCallback(this.predict);
                     })
                     .catch(error => {
                         console.error(error);
+                        // A stale deviceId throws OverconstrainedError here; leaving
+                        // predicting true would show a running camera that isn't.
+                        this.predicting = false;
                     });
             }
-            this.predicting = !this.predicting;
         },
         async checkUpdates() {
             // TODO: Implement update checking logic
