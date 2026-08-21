@@ -29,6 +29,8 @@
         "DEBOUNCE": "Debounce",
         "MILLISECONDS": " ms",
         "TOGGLE_PREDICTIONS": "Toggle Predictions",
+        "LOCK_UI": "Lock UI",
+        "LOCKED": "Locked",
         "WEBCAM_OPACITY": "Webcam Opacity",
         "LANDMARKS_OPACITY": "Landmarks Opacity",
         "AUTO_START_PREDICTIONS": "Automatically start prediction.",

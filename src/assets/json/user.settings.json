@@ -32,5 +32,6 @@
 	"face.landmarks.right.iris.thickness": 1,
 	"face.landmarks.left.iris.color": "#00ff00",
 	"face.landmarks.left.iris.thickness": 1,
-	"allow.input.simulation": false
+	"allow.input.simulation": false,
+	"lock.ui": true
 }

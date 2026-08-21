@@ -249,8 +249,8 @@
 						"threshold": "76",
 						"activated": true,
 						"pynput": {
-							"start": "",
-							"stop": ""
+							"start": "keyboard.press(KEY_F24)",
+							"stop": "keyboard.release(KEY_F24)"
 						}
 					},
 					"advance": {
@@ -282,8 +282,8 @@
 						"threshold": "76",
 						"activated": true,
 						"pynput": {
-							"start": "",
-							"stop": ""
+							"start": "keyboard.press(KEY_F22)",
+							"stop": "keyboard.release(KEY_F22)"
 						}
 					},
 					"advance": {

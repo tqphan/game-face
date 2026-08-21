@@ -50,7 +50,25 @@ const application = createApp({
         await this.enumerateCameras();
         await this.init();
     },
+    computed: {
+        // Single source of truth for the binding editor's disabled state.
+        locked() {
+            return Boolean(this.settings["lock.ui"]);
+        }
+    },
     methods: {
+        lockUiChanged() {
+            // Persist the lock immediately when auto-save is on, but don't route
+            // through saveSettings() - that restarts the webcam, and toggling the
+            // lock has no effect on the tracker.
+            if (!this.settings["auto.save.settings"]) return;
+            try {
+                const parsed = JSON.stringify(this.settings, null, '\t');
+                bridge.save_settings(parsed);
+            } catch (error) {
+                console.error(error);
+            }
+        },
         async init() {
             const filesetResolver = await FilesetResolver.forVisionTasks(
                 "/assets/mediapipe/wasm"
@@ -231,6 +249,10 @@ const application = createApp({
         loadSettings() {
             try {
                 this.settings = json.settings;
+                // Older settings files won't have this key; undefined would leave
+                // the toggle in an indeterminate state on first render.
+                if (this.settings["lock.ui"] === undefined)
+                    this.settings["lock.ui"] = false;
             } catch (error) {
                 console.error(error);
                 this.settings = structuredClone(settings);

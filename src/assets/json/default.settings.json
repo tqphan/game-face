@@ -8,5 +8,6 @@
     "auto.save.enabled": false,
     "tracking.confidence": 0.5,
     "presence.confidence": 0.0,
-    "detection.confidence": 0.5
+    "detection.confidence": 0.5,
+    "lock.ui": false
 }

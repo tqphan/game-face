@@ -88,6 +88,16 @@
                   </div>
                 </div>
 
+                <div class="row mb-3">
+                  <div class="col">
+                    <input id="lockUiButton" type="checkbox" class="btn-check" v-model="settings['lock.ui']"
+                      @change="lockUiChanged">
+                    <label class="btn w-100 btn-outline-warning" for="lockUiButton">
+                      {{ translations[settings.language].LOCK_UI ?? 'Lock UI' }}
+                    </label>
+                  </div>
+                </div>
+
                 <!-- Row with video feed and face mesh canvas -->
                 <div class="row mb-3">
                   <div class="col">
@@ -108,7 +118,7 @@
       </div>
       <div class="col-md-8">
         <div id="blendgroup-container" class="d-grid gap-3" v-if="app.profiles.items.length > 0">
-          <button type="button" class="btn w-100 btn-success" @click="createBinding">
+          <button type="button" class="btn w-100 btn-success" @click="createBinding" :disabled="locked">
             {{ translations[settings.language].CREATE_BINDING }}
           </button>
           <div class="card blendgroup-container"
@@ -117,14 +127,15 @@
               <div class="row align-items-center p-0 m-0">
                 <div class="col-auto p-0">
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" v-model="binding.simplified">
+                    <input class="form-check-input" type="checkbox" role="switch" v-model="binding.simplified"
+                      :disabled="locked">
                     <!-- <label class="form-check-label">☰⎯</label> -->
                   </div>
                 </div>
                 <div class="col text-center p-0">
                 </div>
                 <div class="col-auto p-0">
-                  <button type="button" class="btn-close" @click="removeBinding(index)"></button>
+                  <button type="button" class="btn-close" @click="removeBinding(index)" :disabled="locked"></button>
                 </div>
               </div>
             </div>
@@ -145,7 +156,8 @@
                           {{ translations[settings.language].JAVASCRIPT_EXPRESSION }}
                         </label>
                         <input class="form-control" :class="{'is-invalid': !(binding.advance.start.fn)}" spellcheck="false"
-                          @change="logicChanged(binding.advance.start)" v-model="binding.advance.start.logic">
+                          @change="logicChanged(binding.advance.start)" v-model="binding.advance.start.logic"
+                          :disabled="locked">
                         <div class="invalid-feedback">
                           {{ translations[settings.language].INVALID_EXPRESSION }}
                         </div>
@@ -155,7 +167,7 @@
                         <label class="form-label">
                           {{ translations[settings.language].PYNPUT_EXPRESSION }}
                         </label>
-                        <input class="form-control" spellcheck="false" v-model="binding.advance.start.pynput">
+                        <input class="form-control" spellcheck="false" v-model="binding.advance.start.pynput" :disabled="locked">
                         <div class="invalid-feedback">
                           <!-- Please enter a message in the textarea. :class="{is-invalid: (binding.start.fn)}" -->
                         </div>
@@ -165,7 +177,7 @@
                         <label class="form-label">{{ translations[settings.language].DEBOUNCE }}
                           ({{binding.advance.start.debounce}} {{ translations[settings.language].MILLISECONDS }})</label>
                         <input type="range" class="form-range" min="0" max="1000" step="50"
-                          v-model="binding.advance.start.debounce">
+                          v-model="binding.advance.start.debounce" :disabled="locked">
                       </div>
                     </div>
                   </div>
@@ -183,7 +195,8 @@
                           {{ translations[settings.language].JAVASCRIPT_EXPRESSION }}
                         </label>
                         <input class="form-control" :class="{'is-invalid': !(binding.advance.stop.fn)}" spellcheck="false"
-                          @change="logicChanged(binding.advance.stop)" v-model="binding.advance.stop.logic">
+                          @change="logicChanged(binding.advance.stop)" v-model="binding.advance.stop.logic"
+                          :disabled="locked">
                         <div class="invalid-feedback">
                           {{ translations[settings.language].INVALID_EXPRESSION }}
                         </div>
@@ -193,7 +206,7 @@
                         <label class="form-label">
                           {{ translations[settings.language].PYNPUT_EXPRESSION }}
                         </label>
-                        <input class="form-control" spellcheck="false" v-model="binding.advance.stop.pynput">
+                        <input class="form-control" spellcheck="false" v-model="binding.advance.stop.pynput" :disabled="locked">
                         <div class="invalid-feedback">
                           <!-- Please enter a message in the textarea. -->
                         </div>
@@ -203,7 +216,7 @@
                         <label class="form-label">{{ translations[settings.language].DEBOUNCE }}
                           ({{binding.advance.stop.debounce}} {{ translations[settings.language].MILLISECONDS }})</label>
                         <input type="range" class="form-range" min="0" max="1000" step="50"
-                          v-model="binding.advance.stop.debounce">
+                          v-model="binding.advance.stop.debounce" :disabled="locked">
                       </div>
                     </div>
                   </div>
@@ -215,7 +228,7 @@
               <div class="row" v-show="(binding.simplified)">
                 <div class="col slider-container align-items-center">
                   <input type="range" class="custom-form-range" min="0" max="100"
-                    v-model="binding.simple.threshold">
+                    v-model="binding.simple.threshold" :disabled="locked">
                   <div class="progress">
                     <div class="progress-bar bg-success" role="progressbar"
                       :style="'width: ' + mp.bs[binding.simple.blendshape] + '%;'"></div>
@@ -223,7 +236,7 @@
                   <div class="my-3"></div>
                   <div class="row">
                     <div class="col-4">
-                      <select class="form-select" v-model="binding.simple.blendshape">
+                      <select class="form-select" v-model="binding.simple.blendshape" :disabled="locked">
                         <option value="_neutral">_neutral</option>
                         <option value="browDownLeft">browDownLeft</option>
                         <option value="browDownRight">browDownRight</option>
@@ -279,10 +292,10 @@
                       </select>
                     </div>
                     <div class="col-4">
-                      <input class="form-control" spellcheck="false" v-model="binding.simple.pynput.start">
+                      <input class="form-control" spellcheck="false" v-model="binding.simple.pynput.start" :disabled="locked">
                     </div>
                     <div class="col-4">
-                      <input class="form-control" spellcheck="false" v-model="binding.simple.pynput.stop">
+                      <input class="form-control" spellcheck="false" v-model="binding.simple.pynput.stop" :disabled="locked">
                     </div>
                   </div>
                 </div>
