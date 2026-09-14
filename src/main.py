@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import (
@@ -9,7 +9,7 @@ from PySide6.QtWebEngineCore import (
     QWebEngineUrlRequestJob,
     QWebEngineUrlScheme
 )
-from PySide6.QtCore import QUrl, QBuffer, QIODevice, QObject, Slot, Signal
+from PySide6.QtCore import QUrl, QBuffer, QIODevice, QObject, Slot, Signal, QTimer
 import sys
 import os
 import mimetypes
@@ -118,7 +118,34 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self._view)
 
+        self._close_confirmed = False
+
     def closeEvent(self, event):
+        if not self._close_confirmed:
+            event.ignore()
+
+            box = QMessageBox(self)
+            box.setWindowTitle('Confirm Close')
+            box.setText('Are you sure you want to close?\nClosing automatically in 10 seconds.')
+            box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            box.setDefaultButton(QMessageBox.StandardButton.Yes)
+
+            # Auto-confirm if the user doesn't respond in time
+            timeout_timer = QTimer(box)
+            timeout_timer.setSingleShot(True)
+            timeout_timer.timeout.connect(lambda: box.done(QMessageBox.StandardButton.Yes))
+            timeout_timer.start(10000)
+
+            result = box.exec()
+            timeout_timer.stop()
+
+            if result != QMessageBox.StandardButton.Yes:
+                return
+
+            self._close_confirmed = True
+            self.close()
+            return
+
         # 1. Stop any in-flight navigation
         self._view.stop()
         # 2. Detach page from view (breaks view → page → profile chain)
