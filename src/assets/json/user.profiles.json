@@ -213,7 +213,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "browInnerUp",
-						"threshold": "2",
+						"threshold": "9",
 						"activated": true,
 						"pynput": {
 							"start": "mouse.press(BTN_LEFT)",
@@ -246,40 +246,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "eyeLookOutLeft",
-						"threshold": "76",
-						"activated": true,
-						"pynput": {
-							"start": "keyboard.press(KEY_F24)",
-							"stop": "keyboard.release(KEY_F24)"
-						}
-					},
-					"advance": {
-						"started": false,
-						"start": {
-							"logic": "",
-							"pynput": "",
-							"debounce": 0,
-							"activated": false,
-							"time": 0,
-							"fn": null
-						},
-						"stop": {
-							"logic": "",
-							"pynput": "",
-							"debounce": 0,
-							"activated": true,
-							"time": 0,
-							"fn": null
-						}
-					}
-				},
-				{
-					"name": "",
-					"simplified": true,
-					"enabled": true,
-					"simple": {
-						"blendshape": "eyeLookOutRight",
-						"threshold": "76",
+						"threshold": "80",
 						"activated": true,
 						"pynput": {
 							"start": "keyboard.press(KEY_F22)",
@@ -311,11 +278,44 @@
 					"simplified": true,
 					"enabled": true,
 					"simple": {
-						"blendshape": "mouthPucker",
-						"threshold": 50,
+						"blendshape": "eyeLookOutRight",
+						"threshold": "83",
 						"activated": true,
 						"pynput": {
-							"start": "mouse.press(BTN_RIGHT)",
+							"start": "keyboard.press(KEY_F24)",
+							"stop": "keyboard.release(KEY_F24)"
+						}
+					},
+					"advance": {
+						"started": false,
+						"start": {
+							"logic": "",
+							"pynput": "",
+							"debounce": 0,
+							"activated": false,
+							"time": 0,
+							"fn": null
+						},
+						"stop": {
+							"logic": "",
+							"pynput": "",
+							"debounce": 0,
+							"activated": true,
+							"time": 0,
+							"fn": null
+						}
+					}
+				},
+				{
+					"name": "",
+					"simplified": true,
+					"enabled": true,
+					"simple": {
+						"blendshape": "mouthPucker",
+						"threshold": "95",
+						"activated": true,
+						"pynput": {
+							"start": " mouse.press(BTN_RIGHT)",
 							"stop": "mouse.release(BTN_RIGHT)"
 						}
 					},
@@ -345,7 +345,7 @@
 					"enabled": true,
 					"simple": {
 						"blendshape": "mouthSmileRight",
-						"threshold": "45",
+						"threshold": "56",
 						"activated": true,
 						"pynput": {
 							"start": "keyboard.press(KEY_F23)",
@@ -381,8 +381,8 @@
 						"threshold": "8",
 						"activated": true,
 						"pynput": {
-							"start": "",
-							"stop": ""
+							"start": " mouse.press(BTN_RIGHT)",
+							"stop": "mouse.release(BTN_RIGHT)"
 						}
 					},
 					"advance": {

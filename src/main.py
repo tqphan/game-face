@@ -10,6 +10,7 @@ from PySide6.QtWebEngineCore import (
     QWebEngineUrlScheme
 )
 from PySide6.QtCore import QUrl, QBuffer, QIODevice, QObject, Slot, Signal, QTimer
+from PySide6.QtGui import QIcon
 import sys
 import os
 import mimetypes
@@ -168,19 +169,23 @@ def main():
 
     app = QApplication(sys.argv)
 
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    icon = QIcon(os.path.join(script_dir, 'assets', 'images', 'mozy.png'))
+    app.setWindowIcon(icon)
+
     profile = QWebEngineProfile('CameraProfile')
     settings = profile.settings()
     settings.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
     settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
     handler = LocalFolderHandler(script_dir)
     profile.installUrlSchemeHandler(b'local', handler)
 
     page = WebPage(profile)
 
     window = MainWindow(profile, page, handler)
-    window.setUrl = lambda url: window._view.setUrl(url)   # convenience
+    window.setWindowIcon(icon)
+    window.setUrl = lambda url: window._view.setUrl(url) 
     window._view.setUrl(QUrl('local://localhost/'))
     window.showMaximized()
 
