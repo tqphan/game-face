@@ -170,7 +170,7 @@ def main():
     app = QApplication(sys.argv)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    icon = QIcon(os.path.join(script_dir, 'assets', 'images', 'mozy.png'))
+    icon = QIcon(os.path.join(script_dir, 'assets', 'images', 'icon.png'))
     app.setWindowIcon(icon)
 
     profile = QWebEngineProfile('CameraProfile')
