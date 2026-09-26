@@ -1,20 +1,14 @@
 #pragma once
 
+#include "result.h"
+
 #include <cstdint>
-#include <expected>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace game_face {
-
-struct TrackerError {
-    std::string message;
-};
-
-template <class T>
-using TrackerResult = std::expected<T, TrackerError>;
 
 struct FaceTrackerOptions {
     enum class Mode { Image, Video };
@@ -57,7 +51,7 @@ struct FaceFrame {
 // Not thread-safe: create and use each instance on one thread.
 class FaceTracker {
 public:
-    static TrackerResult<std::unique_ptr<FaceTracker>> create(const FaceTrackerOptions& options);
+    static Result<std::unique_ptr<FaceTracker>> create(const FaceTrackerOptions& options);
     ~FaceTracker();
 
     FaceTracker(const FaceTracker&) = delete;
@@ -65,7 +59,7 @@ public:
 
     // In Video mode timestamps must increase; a timestamp that doesn't is
     // bumped to one past the previous one. Ignored in Image mode.
-    TrackerResult<FaceFrame> detect(const RgbImageView& image, std::int64_t timestamp_ms);
+    Result<FaceFrame> detect(const RgbImageView& image, std::int64_t timestamp_ms);
 
 private:
     struct Impl;

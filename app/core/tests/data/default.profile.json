@@ -1,0 +1,87 @@
+{
+    "version": 1,
+    "selection": 0,
+    "items": [
+        {
+            "name": "default",
+            "bindings": [
+                {
+                    "start": {
+                        "logic": "browInnerUp > 40",
+                        "pynput": "{f14 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "browInnerUp < 40",
+                        "pynput": "{f14 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                },
+                {
+                    "start": {
+                        "logic": "eyeLookOutLeft > 75",
+                        "pynput": "{f22 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "eyeLookOutLeft < 75",
+                        "pynput": "{f22 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                },
+                {
+                    "start": {
+                        "logic": "eyeLookOutRight > 75",
+                        "pynput": "{f19 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "eyeLookOutRight < 75",
+                        "pynput": "{f19 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                },
+                {
+                    "start": {
+                        "logic": "mouthPucker > 70",
+                        "pynput": "{f13 down}",
+                        "debounce": 0,
+                        "activated": false,
+                        "time": 0
+                    },
+                    "stop": {
+                        "logic": "mouthPucker < 70",
+                        "pynput": "{f13 up}",
+                        "debounce": 0,
+                        "activated": true,
+                        "time": 0
+                    },
+                    "blendshapes": [],
+                    "enabled": true,
+                    "started": false
+                }
+            ]
+        }
+    ]
+}

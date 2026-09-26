@@ -95,13 +95,13 @@ FaceTracker::FaceTracker(std::unique_ptr<Impl> impl)
 
 FaceTracker::~FaceTracker() = default;
 
-TrackerResult<std::unique_ptr<FaceTracker>> FaceTracker::create(const FaceTrackerOptions& options)
+Result<std::unique_ptr<FaceTracker>> FaceTracker::create(const FaceTrackerOptions& options)
 {
     auto impl = std::make_unique<Impl>();
     if (auto error = impl->load(options.library_path); !error.empty())
-        return std::unexpected(TrackerError{error});
+        return failure(error);
     if (!std::filesystem::exists(options.model_path))
-        return std::unexpected(TrackerError{"model not found: " + options.model_path.string()});
+        return failure("model not found: " + options.model_path.string());
 
     const std::string model_path = options.model_path.string();
 
@@ -121,17 +121,17 @@ TrackerResult<std::unique_ptr<FaceTracker>> FaceTracker::create(const FaceTracke
 
     char* error = nullptr;
     if (impl->create(&mp, &impl->landmarker, &error) != kMpOk || !impl->landmarker)
-        return std::unexpected(TrackerError{impl->takeError(error, "could not create face landmarker")});
+        return failure(impl->takeError(error, "could not create face landmarker"));
 
     impl->mode = options.mode;
     return std::unique_ptr<FaceTracker>(new FaceTracker(std::move(impl)));
 }
 
-TrackerResult<FaceFrame> FaceTracker::detect(const RgbImageView& image, std::int64_t timestamp_ms)
+Result<FaceFrame> FaceTracker::detect(const RgbImageView& image, std::int64_t timestamp_ms)
 {
     Impl& d = *impl_;
     if (!image.data || image.width <= 0 || image.height <= 0 || image.stride < image.width * 3)
-        return std::unexpected(TrackerError{"invalid image"});
+        return failure("invalid image");
 
     // The C API needs tightly packed rows.
     const int row_bytes = image.width * 3;
@@ -148,7 +148,7 @@ TrackerResult<FaceFrame> FaceTracker::detect(const RgbImageView& image, std::int
     char* error = nullptr;
     if (d.createImage(kMpImageFormatSrgb, image.width, image.height, pixels,
                       row_bytes * image.height, &mp_image, &error) != kMpOk) {
-        return std::unexpected(TrackerError{d.takeError(error, "could not create image")});
+        return failure(d.takeError(error, "could not create image"));
     }
 
     MpFaceLandmarkerResult result{};
@@ -163,7 +163,7 @@ TrackerResult<FaceFrame> FaceTracker::detect(const RgbImageView& image, std::int
     }
     d.freeImage(mp_image);
     if (status != kMpOk)
-        return std::unexpected(TrackerError{d.takeError(error, "face detection failed")});
+        return failure(d.takeError(error, "face detection failed"));
 
     FaceFrame frame;
     if (result.face_landmarks_count > 0) {

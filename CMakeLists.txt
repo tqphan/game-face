@@ -11,6 +11,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+option(GAME_FACE_BUILD_TESTS "Build the core unit tests" ON)
+if(GAME_FACE_BUILD_TESTS)
+    enable_testing()
+endif()
+
 # The face landmarker model shipped with the Python app, reused as-is.
 set(GAME_FACE_FACE_MODEL ${PROJECT_SOURCE_DIR}/src/assets/mediapipe/face_landmarker.task)
 include(FetchMediaPipe)

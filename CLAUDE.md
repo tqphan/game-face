@@ -16,11 +16,17 @@ $env:PATH = "C:\Qt\Tools\mingw1310_64\bin;C:\Qt\Tools\CMake_64\bin;C:\Qt\Tools\N
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=C:/Qt/6.10.1/mingw_64
 cmake --build build
 # running needs Qt's DLLs: add C:\Qt\6.10.1\mingw_64\bin to PATH
+ctest --test-dir build -L core --output-on-failure        # all core tests
+build\app\core\tests\tst_expression.exe logic             # one suite, one test function
 build\tools\face-probe\face-probe.exe --image some-face.jpg
 ```
 
+Core tests (Qt Test, `app/core/tests`) never inject input or use the camera, so they're safe to run. Their fixtures in `tests/data` are frozen copies of the original app's JSON files.
+
 - `cmake/FetchMediaPipe.cmake` downloads the pinned MediaPipe wheel from PyPI (SHA-256 checked) and extracts `libmediapipe`, the Tasks C API library. The wheel has no headers, so `third_party/mediapipe_c/mediapipe_c_api.h` is transcribed from the wheel's ctypes bindings. Re-check it whenever the version changes.
-- `app/core` (plain C++, no Qt) loads `libmediapipe` at runtime; `FaceTracker` wraps the face landmarker. The DLL is MSVC-built but exposes a C ABI, so MinGW builds can use it.
+- `app/core` (no GUI; Qt Core only for JSON and files) loads `libmediapipe` at runtime; `FaceTracker` wraps the face landmarker. The DLL is MSVC-built but exposes a C ABI, so MinGW builds can use it.
+- `BindingEngine` ports `processSimpleBindings`/`processAdvanceBindings` from `src/assets/scripts/app.js` rule for rule, including that the stop trigger starts "fired". It sends command strings to a callback and never injects anything itself. `Expression` replaces filtrex: a hand-written parser with filtrex's precedence (`not x > 5` is `(not x) > 5`), numbers only, and unknown names rejected at compile time.
+- `profiles.cpp` reads the original `user.profiles.json` layout and the older one (`default.profile.json`), and writes the original field names plus `"schemaVersion": 2`.
 - MediaPipe ≥ 0.10.35 (including the pinned 1.0.1) sends usage metrics to Google. The user has accepted this for now; the shipped app will need a privacy note.
 - `tools/face-probe` is the phase-2 check: `--image` for a still image, `--camera` for the webcam. Don't run `--camera` yourself; that turns on the user's webcam.
 
