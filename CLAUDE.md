@@ -6,7 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 game-face turns facial expressions into keyboard and mouse input. A PySide6 (Qt WebEngine) desktop shell hosts a Vue 3 web UI. MediaPipe Face Landmarker runs in the browser and scores blendshapes (0–100) on each video frame. User-defined bindings map those scores to input commands, which Python injects into the OS.
 
-## Running
+## C++/QML rewrite (in progress, branch `qt-rewrite`)
+
+A Qt 6 C++ rewrite lives alongside the Python app. It sits at the repo root (`CMakeLists.txt`, `app/`, `tools/`, `cmake/`, `third_party/`); keyboard/mouse injection comes from the separate `input_devices_simulator` repo.
+
+```powershell
+# Qt's MinGW kit is the only Qt kit installed locally
+$env:PATH = "C:\Qt\Tools\mingw1310_64\bin;C:\Qt\Tools\CMake_64\bin;C:\Qt\Tools\Ninja;$env:PATH"
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=C:/Qt/6.10.1/mingw_64
+cmake --build build
+# running needs Qt's DLLs: add C:\Qt\6.10.1\mingw_64\bin to PATH
+build\tools\face-probe\face-probe.exe --image some-face.jpg
+```
+
+- `cmake/FetchMediaPipe.cmake` downloads the pinned MediaPipe wheel from PyPI (SHA-256 checked) and extracts `libmediapipe`, the Tasks C API library. The wheel has no headers, so `third_party/mediapipe_c/mediapipe_c_api.h` is transcribed from the wheel's ctypes bindings. Re-check it whenever the version changes.
+- `app/core` (plain C++, no Qt) loads `libmediapipe` at runtime; `FaceTracker` wraps the face landmarker. The DLL is MSVC-built but exposes a C ABI, so MinGW builds can use it.
+- MediaPipe ≥ 0.10.35 (including the pinned 1.0.1) sends usage metrics to Google. The user has accepted this for now; the shipped app will need a privacy note.
+- `tools/face-probe` is the phase-2 check: `--image` for a still image, `--camera` for the webcam. Don't run `--camera` yourself; that turns on the user's webcam.
+
+## Running the Python app
 
 ```bash
 pip install -r requirements.txt   # PySide6, evdev
