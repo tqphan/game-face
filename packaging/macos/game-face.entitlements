@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Release builds are signed with the hardened runtime, which requires these explicitly. -->
+<plist version="1.0">
+<dict>
+    <!-- Webcam access for face tracking. -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    <!-- A self-signed identity has no Apple Team ID, so library validation would
+         reject the bundled Qt frameworks and the dlopen'd libmediapipe.dylib. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
