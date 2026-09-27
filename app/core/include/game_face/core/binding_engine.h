@@ -32,6 +32,9 @@ public:
 
     // Copies the profile, compiles its expressions and resets all state.
     void setProfile(const Profile& profile);
+    // Like setProfile, but keeps each binding's state (by position), so
+    // editing a profile while tracking doesn't re-send commands.
+    void updateProfile(const Profile& profile);
     // Re-arms every binding, e.g. after tracking stops. Held keys are the
     // caller's to release.
     void reset();
@@ -62,6 +65,8 @@ private:
         CompiledTrigger stop;
     };
 
+    void compileProfile(const Profile& profile);
+    void updateStatus(std::size_t index);
     void processSimple(CompiledBinding& binding, const BlendshapeScores& scores);
     void processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms);
     void fire(const std::string& command);

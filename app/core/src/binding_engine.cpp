@@ -21,6 +21,39 @@ BindingEngine::BindingEngine(CommandSink sink)
 
 void BindingEngine::setProfile(const Profile& profile)
 {
+    compileProfile(profile);
+    reset();
+}
+
+void BindingEngine::updateProfile(const Profile& profile)
+{
+    std::vector<CompiledBinding> previous = std::move(bindings_);
+    compileProfile(profile);
+    for (std::size_t i = 0; i < bindings_.size(); ++i) {
+        CompiledBinding& binding = bindings_[i];
+        if (i >= previous.size()) {
+            resetBinding(binding);
+        } else {
+            binding.armed = previous[i].armed;
+            binding.start.activated = previous[i].start.activated;
+            binding.start.since_ms = previous[i].start.since_ms;
+            binding.stop.activated = previous[i].stop.activated;
+            binding.stop.since_ms = previous[i].stop.since_ms;
+        }
+        updateStatus(i);
+    }
+}
+
+void BindingEngine::updateStatus(std::size_t index)
+{
+    const CompiledBinding& binding = bindings_[index];
+    status_[index].start_active = binding.start.activated;
+    status_[index].stop_active = binding.stop.activated;
+    status_[index].simple_active = !binding.armed;
+}
+
+void BindingEngine::compileProfile(const Profile& profile)
+{
     bindings_.clear();
     status_.clear();
 
@@ -54,7 +87,6 @@ void BindingEngine::setProfile(const Profile& profile)
         bindings_.push_back(std::move(compiled));
         status_.push_back(std::move(status));
     }
-    reset();
 }
 
 void BindingEngine::resetBinding(CompiledBinding& binding)
@@ -70,12 +102,9 @@ void BindingEngine::resetBinding(CompiledBinding& binding)
 
 void BindingEngine::reset()
 {
-    for (auto& binding : bindings_)
-        resetBinding(binding);
-    for (auto& status : status_) {
-        status.start_active = false;
-        status.stop_active = true;
-        status.simple_active = false;
+    for (std::size_t i = 0; i < bindings_.size(); ++i) {
+        resetBinding(bindings_[i]);
+        updateStatus(i);
     }
 }
 
@@ -91,9 +120,7 @@ void BindingEngine::process(const BlendshapeScores& scores, double time_ms)
             processTrigger(binding.start, scores, time_ms);
             processTrigger(binding.stop, scores, time_ms);
         }
-        status_[i].start_active = binding.start.activated;
-        status_[i].stop_active = binding.stop.activated;
-        status_[i].simple_active = !binding.armed;
+        updateStatus(i);
     }
 }
 

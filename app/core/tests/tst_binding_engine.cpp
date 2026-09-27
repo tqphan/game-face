@@ -161,6 +161,26 @@ private slots:
         QCOMPARE(h.feed("jawOpen", {60}), Commands{"start"});
     }
 
+    void updateProfileKeepsState()
+    {
+        Harness h({simpleBinding("jawOpen", 50, "start", "stop")});
+        QCOMPARE(h.feed("jawOpen", {60}), Commands{"start"});
+        // Dragging the threshold while the key is held must not press it again.
+        h.engine.updateProfile(Profile{"test", {simpleBinding("jawOpen", 55, "start", "stop")}});
+        QVERIFY(h.engine.status()[0].simple_active);
+        QCOMPARE(h.feed("jawOpen", {60, 57}), Commands{});
+        QCOMPARE(h.feed("jawOpen", {54}), Commands{"stop"});
+    }
+
+    void updateProfileResetsNewBindings()
+    {
+        Harness h({simpleBinding("jawOpen", 50, "a", "")});
+        (void)h.feed("jawOpen", {60});
+        h.engine.updateProfile(Profile{"test", {simpleBinding("jawOpen", 50, "a", ""),
+                                                simpleBinding("jawOpen", 50, "b", "")}});
+        QCOMPARE(h.feed("jawOpen", {61}), Commands{"b"});
+    }
+
     void setProfileReplacesBindings()
     {
         Harness h({simpleBinding("jawOpen", 50, "old", "")});
