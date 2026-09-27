@@ -10,6 +10,7 @@ Dialog {
     modal: true
     title: qsTr("Create profile")
     standardButtons: Dialog.Ok | Dialog.Cancel
+    footer: AppDialogButtons {}
 
     onOpened: {
         nameField.text = ""

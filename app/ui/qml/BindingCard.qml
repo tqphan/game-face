@@ -98,6 +98,8 @@ Pane {
                     value: card.threshold
                     enabled: !card.locked
                     onMoved: card.model.threshold = value
+                    // Only the thumb: the level bar underneath is the track.
+                    background: Item {}
                     ToolTip.visible: pressed
                     ToolTip.text: qsTr("Threshold: %1").arg(Math.round(value))
                 }

@@ -5,6 +5,8 @@ qt_policy(SET QTP0004 NEW)
 
 qt_add_executable(game-face WIN32 MACOSX_BUNDLE main.cpp)
 
+set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_qml_module(game-face
     URI GameFace
     VERSION 1.0
@@ -19,6 +21,9 @@ qt_add_qml_module(game-face
         qml/NewProfileDialog.qml
         qml/BlendshapesDialog.qml
         qml/CloseDialog.qml
+        qml/Theme.qml
+        qml/AppButton.qml
+        qml/AppDialogButtons.qml
     SOURCES
         app_controller.h app_controller.cpp
         face_connections.h

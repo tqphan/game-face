@@ -28,6 +28,7 @@ private slots:
         QVERIFY(s->auto_save_profiles);
         QVERIFY(s->lock_ui);
         QVERIFY(s->camera_id.empty());  // webcam.deviceId is a browser ID; not imported
+        QVERIFY(s->confirm_on_close);   // not in the original file: default on
     }
 
     void defaultsForMissingAndMalformedValues()
@@ -50,6 +51,7 @@ private slots:
         s.presence_confidence = 0.25;
         s.allow_input_simulation = true;
         s.lock_ui = true;
+        s.confirm_on_close = false;
 
         auto reread = settingsFromJson(settingsToJson(s));
         QVERIFY(reread.has_value());
@@ -58,6 +60,7 @@ private slots:
         QCOMPARE(reread->presence_confidence, 0.25);
         QVERIFY(reread->allow_input_simulation);
         QVERIFY(reread->lock_ui);
+        QVERIFY(!reread->confirm_on_close);
     }
 
     void saveAndLoad()

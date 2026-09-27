@@ -19,9 +19,13 @@ ApplicationWindow {
     property bool closeConfirmed: false
 
     onClosing: (close) => {
-        if (!closeConfirmed) {
+        if (closeConfirmed)
+            return
+        if (App.settings.confirmOnClose) {
             close.accepted = false
             closeDialog.open()
+        } else {
+            App.shutdown()
         }
     }
 

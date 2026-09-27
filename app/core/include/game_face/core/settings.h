@@ -30,6 +30,7 @@ struct Settings {
     bool auto_save_settings = false;          // auto.save.settings
     bool auto_save_profiles = false;          // auto.save.profiles
     bool lock_ui = false;                     // lock.ui
+    bool confirm_on_close = true;             // confirm.on.close (new in game-face 2)
 };
 
 // Missing or malformed values keep their defaults; unknown keys are ignored.

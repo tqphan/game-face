@@ -27,19 +27,20 @@ Pane {
 
         RowLayout {
             Layout.fillWidth: true
-            Button {
+            AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Create profile")
                 highlighted: true
+                Material.accent: Theme.primaryButton
                 enabled: !App.settings.lockUi
                 onClicked: panel.newProfileRequested()
             }
-            Button {
+            AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Save profiles")
                 onClicked: App.saveProfiles()
             }
-            Button {
+            AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Remove profile")
                 enabled: !App.settings.lockUi && App.profiles.count > 0
@@ -81,23 +82,23 @@ Pane {
 
         RowLayout {
             Layout.fillWidth: true
-            Button {
+            AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Settings")
                 onClicked: panel.settingsRequested()
             }
-            Button {
+            AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Blendshapes")
                 onClicked: panel.blendshapesRequested()
             }
         }
 
-        Button {
+        AppButton {
             Layout.fillWidth: true
             text: App.tracking ? qsTr("Stop tracking") : qsTr("Start tracking")
             highlighted: App.tracking
-            Material.accent: Material.Green
+            Material.accent: Theme.positiveButton
             onClicked: App.toggleTracking()
         }
 
@@ -178,6 +179,7 @@ Pane {
         modal: true
         title: qsTr("Remove profile")
         standardButtons: Dialog.Yes | Dialog.No
+        footer: AppDialogButtons {}
         Label {
             text: qsTr("Remove the selected profile and its bindings?")
         }

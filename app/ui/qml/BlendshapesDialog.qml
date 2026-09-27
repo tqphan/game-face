@@ -11,6 +11,7 @@ Dialog {
     modal: true
     title: qsTr("Blendshapes")
     standardButtons: Dialog.Close
+    footer: AppDialogButtons {}
 
     ListView {
         anchors.fill: parent

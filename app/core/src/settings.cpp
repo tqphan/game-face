@@ -49,6 +49,7 @@ Result<Settings> settingsFromJson(std::string_view json)
     s.auto_save_settings = toBool(o.value("auto.save.settings"), s.auto_save_settings);
     s.auto_save_profiles = toBool(o.value("auto.save.profiles"), s.auto_save_profiles);
     s.lock_ui = toBool(o.value("lock.ui"), s.lock_ui);
+    s.confirm_on_close = toBool(o.value("confirm.on.close"), s.confirm_on_close);
     return s;
 }
 
@@ -71,6 +72,7 @@ std::string settingsToJson(const Settings& s)
         {"auto.save.settings", s.auto_save_settings},
         {"auto.save.profiles", s.auto_save_profiles},
         {"lock.ui", s.lock_ui},
+        {"confirm.on.close", s.confirm_on_close},
     };
     return QJsonDocument(root).toJson(QJsonDocument::Indented).toStdString();
 }

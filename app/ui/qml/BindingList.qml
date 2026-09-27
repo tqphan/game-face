@@ -1,17 +1,19 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import GameFace
 
 ColumnLayout {
     spacing: 12
 
-    Button {
+    AppButton {
         Layout.fillWidth: true
         visible: App.profiles.count > 0
         enabled: !App.settings.lockUi
         text: qsTr("Add binding")
         highlighted: true
+        Material.accent: Theme.primaryButton
         onClicked: App.addBinding()
     }
 

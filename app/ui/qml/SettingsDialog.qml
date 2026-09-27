@@ -16,6 +16,7 @@ Dialog {
     modal: true
     title: qsTr("Settings")
     standardButtons: Dialog.Save | Dialog.Close
+    footer: AppDialogButtons {}
     onAccepted: App.saveSettings()
 
     readonly property var settings: App.settings
@@ -85,6 +86,11 @@ Dialog {
                 onToggled: dialog.settings.autoStartTracking = checked
             }
             CheckBox {
+                text: qsTr("Ask for confirmation before closing")
+                checked: dialog.settings.confirmOnClose
+                onToggled: dialog.settings.confirmOnClose = checked
+            }
+            CheckBox {
                 text: qsTr("Save settings automatically")
                 checked: dialog.settings.autoSaveSettings
                 onToggled: dialog.settings.autoSaveSettings = checked
@@ -131,7 +137,7 @@ Dialog {
                 text: qsTr("Choose the folder with user.profiles.json and user.settings.json (src/assets/json). This replaces your current profiles and settings.")
             }
             RowLayout {
-                Button {
+                AppButton {
                     text: qsTr("Import…")
                     onClicked: folderDialog.open()
                 }
