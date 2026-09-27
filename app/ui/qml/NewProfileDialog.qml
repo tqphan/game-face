@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import GameFace
 
 Dialog {
@@ -9,8 +10,19 @@ Dialog {
     width: 420
     modal: true
     title: qsTr("Create profile")
-    standardButtons: Dialog.Ok | Dialog.Cancel
-    footer: AppDialogButtons {}
+    footer: DialogButtonBox {
+        AppButton {
+            text: qsTr("Cancel")
+            flat: true
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+        }
+        AppButton {
+            text: qsTr("Create")
+            highlighted: true
+            Material.accent: Theme.primaryButton
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+        }
+    }
 
     onOpened: {
         nameField.text = ""

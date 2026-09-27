@@ -46,17 +46,50 @@ Pane {
         RowLayout {
             Layout.fillWidth: true
 
-            Switch {
-                text: card.simplified ? qsTr("Simple") : qsTr("Advanced")
-                checked: card.simplified
+            ToolButton {
+                id: menuButton
+                text: "☰"
                 enabled: !card.locked
-                onToggled: card.model.simplified = checked
-            }
-            CheckBox {
-                text: qsTr("Enabled")
-                checked: card.bindingEnabled
-                enabled: !card.locked
-                onToggled: card.model.bindingEnabled = checked
+                ToolTip.visible: hovered && !bindingMenu.visible
+                ToolTip.text: qsTr("Binding options")
+                onClicked: bindingMenu.open()
+
+                Menu {
+                    id: bindingMenu
+                    y: menuButton.height
+
+                    // Checkable items toggle `checked` themselves, which would
+                    // break the binding to the model; write the model, then
+                    // bind again.
+                    MenuItem {
+                        text: qsTr("Simple")
+                        checkable: true
+                        checked: card.simplified
+                        onTriggered: {
+                            card.model.simplified = true
+                            checked = Qt.binding(() => card.simplified)
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Advanced")
+                        checkable: true
+                        checked: !card.simplified
+                        onTriggered: {
+                            card.model.simplified = false
+                            checked = Qt.binding(() => !card.simplified)
+                        }
+                    }
+                    MenuSeparator {}
+                    MenuItem {
+                        text: qsTr("Enabled")
+                        checkable: true
+                        checked: card.bindingEnabled
+                        onTriggered: {
+                            card.model.bindingEnabled = !card.bindingEnabled
+                            checked = Qt.binding(() => card.bindingEnabled)
+                        }
+                    }
+                }
             }
             Item { Layout.fillWidth: true }
             ToolButton {
