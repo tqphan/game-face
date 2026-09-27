@@ -1,0 +1,141 @@
+name: MediaPipe
+
+# Builds libmediapipe (the Tasks C library) from MediaPipe's open-source tree,
+# so the app can ship without Google's usage logger. The PyPI wheels from
+# 0.10.35 on contain that logger (Clearcut). mediapipe/tasks/c/BUILD compiles
+# from source unless a library sits in mediapipe/tasks/c/prebuilts/, and the
+# public repo has no prebuilts, so a source build leaves the logger out.
+# scripts/check_mediapipe_lib.py and the import check below confirm that for
+# each build.
+#
+# Runs by hand, or when this workflow or the check script changes (a manual
+# run needs the file on the default branch). Linux only for now; Windows and
+# macOS come once the Linux output checks out. The Bazel flags follow
+# MediaPipe's setup.py.
+
+on:
+  push:
+    paths:
+      - .github/workflows/mediapipe.yml
+      - scripts/check_mediapipe_lib.py
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: MediaPipe tag or commit (no public tag exists for 1.0.1)
+        default: v1.0.0
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mediapipe-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MEDIAPIPE_REF: ${{ inputs.ref || 'v1.0.0' }}
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64
+            os: ubuntu-24.04
+            lib: libmediapipe.so
+            artifact: libmediapipe-linux-x86_64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: game-face
+
+      - uses: actions/checkout@v4
+        with:
+          repository: google-ai-edge/mediapipe
+          ref: ${{ env.MEDIAPIPE_REF }}
+          path: mediapipe
+
+      - name: Refuse prebuilt libraries
+        working-directory: mediapipe
+        run: |
+          if [ -e mediapipe/tasks/c/prebuilts ]; then
+            echo "::error::mediapipe/tasks/c/prebuilts exists; Bazel would ship that library instead of building one."
+            exit 1
+          fi
+
+      # The build tree needs more than the ~14 GB the runner has free.
+      - if: runner.os == 'Linux'
+        name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      # Same compiler setup as MediaPipe's manylinux image: Clang 18 on GCC 14's libstdc++.
+      - if: runner.os == 'Linux'
+        name: System packages
+        run: sudo apt-get update && sudo apt-get install -y clang-18 g++-14 libstdc++-14-dev
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: bazel-contrib/setup-bazel@0.19.0
+        with:
+          module-root: mediapipe
+          bazelisk-cache: true
+          disk-cache: mediapipe-${{ matrix.artifact }}-${{ env.MEDIAPIPE_REF }}
+          repository-cache: true
+
+      # setup.py links OpenCV statically so the library needs no OpenCV .so.
+      - if: runner.os != 'Windows'
+        name: Static OpenCV
+        working-directory: mediapipe
+        run: sed -i.bak 's/OPENCV_SHARED_LIBS = True/OPENCV_SHARED_LIBS = False/' third_party/BUILD
+
+      - if: runner.os == 'Linux'
+        name: Build
+        working-directory: mediapipe
+        env:
+          CC: clang-18
+        run: |
+          bazel build \
+            --compilation_mode=opt --strip=always --jobs=auto \
+            --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU \
+            --define=MEDIAPIPE_DISABLE_GPU=1 --define=OPENCV=source \
+            --define=xnn_enable_avxvnniint8=false \
+            --repo_env=CC=clang-18 \
+            --action_env=PYTHON_BIN_PATH="$(which python)" \
+            //mediapipe/tasks/c:libmediapipe
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp -L bazel-bin/mediapipe/tasks/c/${{ matrix.lib }} "$GITHUB_WORKSPACE/out/"
+
+      - name: Check for telemetry and C API
+        run: python game-face/scripts/check_mediapipe_lib.py out/${{ matrix.lib }}
+
+      - if: runner.os == 'Linux'
+        name: Check imports
+        run: |
+          lib=out/${{ matrix.lib }}
+          readelf -d "$lib" | grep NEEDED
+          net="$(nm -D --undefined-only "$lib" | awk '{print $NF}' | sed 's/@.*//' \
+            | grep -xE 'socket|connect|getaddrinfo|gethostbyname|curl_.*|SSL_.*' || true)"
+          if [ -n "$net" ]; then
+            echo "::error::$lib imports network functions:"
+            echo "$net"
+            exit 1
+          fi
+          echo "No network imports."
+
+      - name: Checksum
+        working-directory: out
+        run: |
+          sha256sum ${{ matrix.lib }} | tee ${{ matrix.lib }}.sha256
+          echo "Built from google-ai-edge/mediapipe ${{ env.MEDIAPIPE_REF }} ($(git -C ../mediapipe rev-parse HEAD))" | tee SOURCE.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: out/
