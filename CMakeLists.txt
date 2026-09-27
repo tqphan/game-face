@@ -20,19 +20,26 @@ endif()
 set(GAME_FACE_FACE_MODEL ${PROJECT_SOURCE_DIR}/src/assets/mediapipe/face_landmarker.task)
 include(FetchMediaPipe)
 
-# Keyboard/mouse injection. Until the repository has a remote, a checkout next
-# to this one is used; override with -DFETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR=<dir>
-# or set IDS_GIT_REPOSITORY.
+# Keyboard/mouse injection. A checkout next to this one is used when present
+# (turn off IDS_USE_SIBLING to ignore it); otherwise the pinned commit is fetched
+# from GitHub. -DFETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR=<dir> overrides both.
 include(FetchContent)
-set(IDS_GIT_REPOSITORY "" CACHE STRING "Git URL of input_devices_simulator")
-set(IDS_GIT_TAG main CACHE STRING "Tag or commit of input_devices_simulator")
+set(IDS_GIT_REPOSITORY "https://github.com/tqphan/input_devices_simulator.git"
+    CACHE STRING "Git URL of input_devices_simulator")
+set(IDS_GIT_TAG 7b3bb41e07109f6eb763eb1c3ad7cf462b2ded90
+    CACHE STRING "Tag or commit of input_devices_simulator")
+option(IDS_USE_SIBLING "Use ../input_devices_simulator when it exists" ON)
 set(_ids_sibling ${PROJECT_SOURCE_DIR}/../input_devices_simulator)
-if(NOT FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR AND NOT IDS_GIT_REPOSITORY)
-    if(NOT EXISTS ${_ids_sibling}/CMakeLists.txt)
-        message(FATAL_ERROR "input_devices_simulator not found next to game-face; "
-                            "set IDS_GIT_REPOSITORY or FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR")
-    endif()
+if(NOT FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR
+   AND IDS_USE_SIBLING AND EXISTS ${_ids_sibling}/CMakeLists.txt)
     set(FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR ${_ids_sibling})
+endif()
+if(FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR)
+    message(STATUS "input_devices_simulator: ${FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR}")
+elseif(NOT IDS_GIT_REPOSITORY)
+    message(FATAL_ERROR "IDS_GIT_REPOSITORY is empty; set it or FETCHCONTENT_SOURCE_DIR_INPUT_DEVICES_SIMULATOR")
+else()
+    message(STATUS "input_devices_simulator: ${IDS_GIT_REPOSITORY} @ ${IDS_GIT_TAG}")
 endif()
 FetchContent_Declare(input_devices_simulator
     GIT_REPOSITORY ${IDS_GIT_REPOSITORY}
