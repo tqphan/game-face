@@ -206,7 +206,9 @@ jobs:
 
       # PowerShell, because Git Bash rewrites the //target argument into a path.
       # Bazel's own genrules need MSYS2's bash (BAZEL_SH). The short output root
-      # keeps paths under Windows' length limit.
+      # keeps paths under Windows' length limit. rules_swift (there for Apple
+      # builds) autoconfigures a Windows toolchain that requires swiftc.exe;
+      # nothing here uses Swift, so an empty repository stands in for it.
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -215,10 +217,14 @@ jobs:
           BAZEL_SH: C:\msys64\usr\bin\bash.exe
         run: |
           $py = (Get-Command python).Source -replace '\\', '/'
+          $swiftStub = "$env:RUNNER_TEMP/swift_local_config" -replace '\\', '/'
+          New-Item -ItemType Directory -Force $swiftStub | Out-Null
+          New-Item -ItemType File -Force "$swiftStub/BUILD.bazel", "$swiftStub/WORKSPACE" | Out-Null
           bazel --output_user_root=C:/_bzl build `
             --compilation_mode=opt --jobs=auto `
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
             --define=MEDIAPIPE_DISABLE_GPU=1 `
+            "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
             //mediapipe/tasks/c:libmediapipe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
