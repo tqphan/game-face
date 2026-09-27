@@ -11,6 +11,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+# Qt's install-time deploy helpers are registered only for packages found in
+# the top-level directory, so Qml must be found here for the app's deploy script.
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Qml)
+
 option(GAME_FACE_BUILD_TESTS "Build the core unit tests" ON)
 if(GAME_FACE_BUILD_TESTS)
     enable_testing()

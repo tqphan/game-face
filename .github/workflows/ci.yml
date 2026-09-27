@@ -1,0 +1,69 @@
+name: CI
+
+# Builds the Qt app on every platform and runs the core tests. The core tests
+# never inject input or open a camera. Release packaging is in release.yml.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  QT_VERSION: '6.10.1'
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows (MSVC)
+            os: windows-latest
+          # GCC 13; the 22.04 image's GCC 11 has no std::expected.
+          - name: Linux
+            os: ubuntu-24.04
+          # arm64 only: MediaPipe ships no x86_64 macOS library.
+          - name: macOS
+            os: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - if: runner.os == 'Linux'
+        name: System packages
+        run: sudo apt-get update && sudo apt-get install -y libgl-dev libegl-dev libxkbcommon-dev libvulkan-dev
+      - uses: lukka/get-cmake@latest
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: qtmultimedia
+          cache: true
+
+      - name: Cache MediaPipe
+        uses: actions/cache@v4
+        with:
+          path: build/_deps/mediapipe-*
+          key: mediapipe-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('cmake/FetchMediaPipe.cmake') }}
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build -L core --output-on-failure
+
+      - name: Install
+        run: cmake --install build --prefix dist

@@ -32,10 +32,10 @@ Keep using the same certificate so the Accessibility and Camera permissions carr
 
 ## Linux
 
-Linux has no OS-level executable signing. Each release includes a detached signature, `game-face.p7s`. To verify it:
+Linux has no OS-level executable signing. Each release includes a detached signature, `bin/game-face.p7s`. To verify it from the unpacked folder:
 
 ```
 openssl x509 -inform DER -in game-face-codesign.cer -out game-face-codesign.pem
-openssl cms -verify -binary -inform DER -in game-face.p7s -content game-face \
+openssl cms -verify -binary -inform DER -in bin/game-face.p7s -content bin/game-face \
   -CAfile game-face-codesign.pem -purpose any -out /dev/null
 ```

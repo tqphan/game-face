@@ -7,8 +7,8 @@ name: Release
 # Requires repository secrets (see packaging/signing/README.md):
 #   SIGNING_CERT_PFX_BASE64, SIGNING_CERT_PASSWORD
 #
-# Assumes the planned CMake project at the repo root producing the target
-# `game-face` and QML under app/qml.
+# `cmake --install` stages each app with libmediapipe, the face model and the
+# Qt libraries, plugins and QML modules it needs (see app/ui/CMakeLists.txt).
 
 on:
   push:
@@ -20,7 +20,7 @@ permissions:
 
 env:
   BUILD_TYPE: Release
-  QT_VERSION: '6.8.*'
+  QT_VERSION: '6.10.1'
   TIMESTAMP_URL: http://timestamp.digicert.com
 
 jobs:
@@ -58,18 +58,14 @@ jobs:
       - name: Stage
         shell: pwsh
         run: |
-          $exe = Get-ChildItem build -Recurse -Filter game-face.exe | Select-Object -First 1
-          if (-not $exe) { throw 'game-face.exe not found under build/' }
-          New-Item -ItemType Directory dist | Out-Null
-          Copy-Item $exe.FullName dist/
-          windeployqt --release --qmldir app/qml dist/game-face.exe
+          cmake --install build --prefix dist
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: Verify uiAccess manifest
         shell: pwsh
         run: |
           $out = Join-Path $env:RUNNER_TEMP 'embedded.manifest'
-          mt.exe -nologo '-inputresource:dist\game-face.exe;#1' "-out:$out"
+          mt.exe -nologo '-inputresource:dist\bin\game-face.exe;#1' "-out:$out"
           if ($LASTEXITCODE) { throw 'Could not extract the embedded manifest.' }
           Get-Content $out
           if (-not (Select-String -Path $out -Pattern 'uiAccess=["'']true["'']' -Quiet)) {
@@ -90,9 +86,9 @@ jobs:
             # Trusted on this throwaway runner only, so `signtool verify` can check the chain.
             Import-Certificate -FilePath game-face-codesign.cer -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
 
-            signtool sign /f $pfx /p $env:PFX_PASSWORD /fd SHA256 /tr $env:TIMESTAMP_URL /td SHA256 /d game-face dist\game-face.exe
+            signtool sign /f $pfx /p $env:PFX_PASSWORD /fd SHA256 /tr $env:TIMESTAMP_URL /td SHA256 /d game-face dist\bin\game-face.exe
             if ($LASTEXITCODE) { throw 'signtool sign failed.' }
-            signtool verify /pa /v dist\game-face.exe
+            signtool verify /pa /v dist\bin\game-face.exe
             if ($LASTEXITCODE) { throw 'signtool verify failed.' }
           } finally {
             Remove-Item $pfx -Force -ErrorAction SilentlyContinue
@@ -110,7 +106,7 @@ jobs:
             game-face-codesign.cer
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -137,12 +133,7 @@ jobs:
           cmake --build build
 
       - name: Stage
-        run: |
-          app="$(find build -maxdepth 4 -type d -name 'game-face.app' | head -n 1)"
-          [ -n "$app" ] || { echo "::error::game-face.app not found under build/"; exit 1; }
-          mkdir -p dist
-          ditto "$app" dist/game-face.app
-          macdeployqt dist/game-face.app -qmldir=app/qml
+        run: cmake --install build --prefix dist
 
       - name: Sign
         env:
@@ -195,7 +186,7 @@ jobs:
           path: game-face-macos.zip
 
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -211,7 +202,7 @@ jobs:
 
       - uses: lukka/get-cmake@latest
       - name: System packages
-        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libxkbcommon-dev
+        run: sudo apt-get update && sudo apt-get install -y libgl-dev libegl-dev libxkbcommon-dev libvulkan-dev
       - uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
@@ -224,11 +215,7 @@ jobs:
           cmake --build build
 
       - name: Stage
-        run: |
-          exe="$(find build -type f -name game-face -perm -u+x | head -n 1)"
-          [ -n "$exe" ] || { echo "::error::game-face executable not found under build/"; exit 1; }
-          mkdir -p dist
-          cp "$exe" dist/
+        run: cmake --install build --prefix dist
 
       # Linux has no OS-level executable signing; publish a detached CMS signature
       # made with the same certificate (verify command in packaging/signing/README.md).
@@ -245,8 +232,8 @@ jobs:
           (umask 077; openssl pkcs12 -in "$p12" -nodes -passin env:PFX_PASSWORD -out "$pem")
           openssl pkcs12 -in "$p12" -clcerts -nokeys -passin env:PFX_PASSWORD -out "$RUNNER_TEMP/cert.pem"
 
-          openssl cms -sign -binary -in dist/game-face -signer "$pem" -outform DER -out dist/game-face.p7s
-          openssl cms -verify -binary -inform DER -in dist/game-face.p7s -content dist/game-face \
+          openssl cms -sign -binary -in dist/bin/game-face -signer "$pem" -outform DER -out dist/bin/game-face.p7s
+          openssl cms -verify -binary -inform DER -in dist/bin/game-face.p7s -content dist/bin/game-face \
             -CAfile "$RUNNER_TEMP/cert.pem" -purpose any -out /dev/null
 
       - name: Package

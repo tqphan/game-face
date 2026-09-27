@@ -194,9 +194,17 @@ void AppController::startTracking()
     }
 
     const QString dir = QCoreApplication::applicationDirPath();
+#if defined(Q_OS_MACOS)
+    // Contents/MacOS holds only the executable; see game_face_deploy_mediapipe.
+    const QString libraryDir = dir + "/../Frameworks";
+    const QString modelDir = dir + "/../Resources";
+#else
+    const QString libraryDir = dir;
+    const QString modelDir = dir;
+#endif
     TrackerConfig config;
-    config.library_path = toPath(dir + "/" + kMediaPipeLibrary);
-    config.model_path = toPath(dir + "/face_landmarker.task");
+    config.library_path = toPath(libraryDir + "/" + kMediaPipeLibrary);
+    config.model_path = toPath(modelDir + "/face_landmarker.task");
     config.detection_confidence = static_cast<float>(settings_->detectionConfidence);
     config.presence_confidence = static_cast<float>(settings_->presenceConfidence);
     config.tracking_confidence = static_cast<float>(settings_->trackingConfidence);

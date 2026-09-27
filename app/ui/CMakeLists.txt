@@ -55,3 +55,15 @@ endif()
 include(WindowsUiAccess)
 game_face_enable_uiaccess(game-face)
 game_face_deploy_mediapipe(game-face)
+
+# `cmake --install` produces a self-contained app: the executable (or bundle),
+# libmediapipe, the model, and the Qt libraries, plugins and QML modules it uses.
+include(GNUInstallDirs)
+install(TARGETS game-face
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+game_face_install_mediapipe(game-face)
+qt_generate_deploy_qml_app_script(TARGET game-face
+    OUTPUT_SCRIPT deploy_script
+    NO_TRANSLATIONS)
+install(SCRIPT ${deploy_script})

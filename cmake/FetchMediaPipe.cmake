@@ -80,12 +80,34 @@ endif()
 
 message(STATUS "MediaPipe ${MEDIAPIPE_VERSION}: ${MEDIAPIPE_LIBRARY}")
 
-# Copies libmediapipe and the face landmarker model next to a target's binary.
+# Copies libmediapipe and the face landmarker model next to a target's binary,
+# or into Contents/Frameworks and Contents/Resources of a macOS app bundle.
 function(game_face_deploy_mediapipe target)
+    get_target_property(bundle ${target} MACOSX_BUNDLE)
+    if(APPLE AND bundle)
+        set(lib_dir $<TARGET_BUNDLE_CONTENT_DIR:${target}>/Frameworks)
+        set(model_dir $<TARGET_BUNDLE_CONTENT_DIR:${target}>/Resources)
+    else()
+        set(lib_dir $<TARGET_FILE_DIR:${target}>)
+        set(model_dir $<TARGET_FILE_DIR:${target}>)
+    endif()
     add_custom_command(TARGET ${target} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${MEDIAPIPE_LIBRARY}
-            ${GAME_FACE_FACE_MODEL}
-            $<TARGET_FILE_DIR:${target}>
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${lib_dir} ${model_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MEDIAPIPE_LIBRARY} ${lib_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GAME_FACE_FACE_MODEL} ${model_dir}
         VERBATIM)
+endfunction()
+
+# Installs libmediapipe and the model where game_face_deploy_mediapipe puts
+# them in the build tree. For a bundle, call after install(TARGETS ... BUNDLE).
+function(game_face_install_mediapipe target)
+    get_target_property(bundle ${target} MACOSX_BUNDLE)
+    if(APPLE AND bundle)
+        set(contents ${target}.app/Contents)
+        install(FILES ${MEDIAPIPE_LIBRARY} DESTINATION ${contents}/Frameworks)
+        install(FILES ${GAME_FACE_FACE_MODEL} DESTINATION ${contents}/Resources)
+    else()
+        install(FILES ${MEDIAPIPE_LIBRARY} ${GAME_FACE_FACE_MODEL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
 endfunction()
