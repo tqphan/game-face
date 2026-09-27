@@ -58,7 +58,7 @@ jobs:
       - name: Stage
         shell: pwsh
         run: |
-          cmake --install build --prefix dist
+          cmake --install build --prefix "${{ github.workspace }}/dist"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: Verify uiAccess manifest
@@ -133,7 +133,7 @@ jobs:
           cmake --build build
 
       - name: Stage
-        run: cmake --install build --prefix dist
+        run: cmake --install build --prefix "${{ github.workspace }}/dist"
 
       - name: Sign
         env:
@@ -215,7 +215,7 @@ jobs:
           cmake --build build
 
       - name: Stage
-        run: cmake --install build --prefix dist
+        run: cmake --install build --prefix "${{ github.workspace }}/dist"
 
       # Linux has no OS-level executable signing; publish a detached CMS signature
       # made with the same certificate (verify command in packaging/signing/README.md).

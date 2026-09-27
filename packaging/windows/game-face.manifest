@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Release-only manifest (applied by cmake/WindowsUiAccess.cmake).
+
+  uiAccess="true" lets game-face send input to elevated windows (it gets around UIPI).
+  Windows only starts a uiAccess executable when BOTH are true:
+    1. it is Authenticode-signed by a certificate trusted in LocalMachine\Root, and
+    2. it runs from a secure location (Program Files, Program Files (x86), System32).
+  Otherwise the launch fails with "A referral was returned from the server".
+  That's why Debug builds, which run unsigned from the build tree, don't use this manifest.
+-->
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="true"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+</assembly>

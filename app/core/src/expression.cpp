@@ -4,8 +4,11 @@
 #include <cctype>
 #include <charconv>
 #include <cmath>
+#include <locale>
 #include <optional>
+#include <sstream>
 #include <vector>
+#include <version>
 
 namespace game_face {
 
@@ -109,7 +112,14 @@ Result<std::vector<Token>> tokenize(std::string_view s)
                     ++end;
             }
             Token token{TokenType::Number, std::string(s.substr(i, end - i)), 0, column};
+#if defined(__cpp_lib_to_chars)
             std::from_chars(s.data() + i, s.data() + end, token.number);
+#else
+            // Apple's libc++ has no floating-point from_chars yet.
+            std::istringstream in(token.text);
+            in.imbue(std::locale::classic());
+            in >> token.number;
+#endif
             tokens.push_back(std::move(token));
             i = end;
             continue;

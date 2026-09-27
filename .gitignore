@@ -28,6 +28,7 @@ MANIFEST
 
 # PyInstaller
 *.manifest
+!packaging/windows/game-face.manifest
 *.spec
 
 # Installer logs
