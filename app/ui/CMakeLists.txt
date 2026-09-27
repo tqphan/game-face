@@ -24,6 +24,7 @@ qt_add_qml_module(game-face
         qml/Theme.qml
         qml/AppButton.qml
         qml/AppDialogButtons.qml
+        qml/AppDialog.qml
     SOURCES
         app_controller.h app_controller.cpp
         face_connections.h

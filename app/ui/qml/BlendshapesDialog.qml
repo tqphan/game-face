@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import GameFace
 
 // Live scores (0..100) for all 52 blendshapes.
-Dialog {
+AppDialog {
     anchors.centerIn: Overlay.overlay
     width: Math.min(640, Overlay.overlay ? Overlay.overlay.width - 40 : 640)
     height: Overlay.overlay ? Overlay.overlay.height - 80 : 600

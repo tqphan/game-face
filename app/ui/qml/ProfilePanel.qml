@@ -173,7 +173,7 @@ Pane {
         }
     }
 
-    Dialog {
+    AppDialog {
         id: removeConfirm
         anchors.centerIn: Overlay.overlay
         modal: true

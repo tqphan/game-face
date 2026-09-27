@@ -5,7 +5,7 @@ import GameFace
 
 // Asks before closing; closes by itself after 10 seconds (as the original
 // app does).
-Dialog {
+AppDialog {
     id: dialog
 
     signal confirmed()

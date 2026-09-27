@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import GameFace
 
-Dialog {
+AppDialog {
     id: dialog
 
     anchors.centerIn: Overlay.overlay

@@ -7,7 +7,7 @@ import GameFace
 
 // Changes apply immediately; Save writes them to disk and restarts tracking
 // so new confidence thresholds take effect.
-Dialog {
+AppDialog {
     id: dialog
 
     anchors.centerIn: Overlay.overlay
