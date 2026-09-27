@@ -33,6 +33,7 @@ concurrency:
 
 env:
   MEDIAPIPE_REF: ${{ inputs.ref || 'v1.0.0' }}
+  OPENCV_VERSION: '4.10.0'
 
 jobs:
   build:
@@ -89,11 +90,46 @@ jobs:
           disk-cache: mediapipe-${{ matrix.artifact }}-${{ env.MEDIAPIPE_REF }}
           repository-cache: true
 
-      # setup.py links OpenCV statically so the library needs no OpenCV .so.
-      - if: runner.os != 'Windows'
-        name: Static OpenCV
-        working-directory: mediapipe
-        run: sed -i.bak 's/OPENCV_SHARED_LIBS = True/OPENCV_SHARED_LIBS = False/' third_party/BUILD
+      # Like MediaPipe's manylinux image: a static OpenCV with only the modules
+      # the Tasks library uses, so it needs no OpenCV .so and none of OpenCV's
+      # image/video codec libraries. (--define=OPENCV=source links those.)
+      - if: runner.os == 'Linux'
+        id: opencv-cache
+        uses: actions/cache@v4
+        with:
+          path: opencv-install
+          key: opencv-${{ env.OPENCV_VERSION }}-core-imgproc-clang18-${{ matrix.os }}
+
+      - if: runner.os == 'Linux' && steps.opencv-cache.outputs.cache-hit != 'true'
+        name: Build OpenCV
+        run: |
+          git clone --depth 1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git opencv-src
+          cmake -S opencv-src -B opencv-build \
+            -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/opencv-install" \
+            -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DBUILD_SHARED_LIBS=OFF -DBUILD_LIST=imgproc,core \
+            -DWITH_ITT=OFF -DWITH_IPP=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_apps=OFF \
+            -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_ts=OFF \
+            -DCV_ENABLE_INTRINSICS=ON -DWITH_PTHREADS=ON -DWITH_PTHREADS_PF=ON
+          cmake --build opencv-build -j "$(nproc)"
+          cmake --install opencv-build
+
+      # @linux_opencv is a local repository rooted at /usr.
+      - if: runner.os == 'Linux'
+        name: Install OpenCV
+        run: |
+          sudo cp -r opencv-install/. /usr/local/
+          cat > mediapipe/third_party/opencv_linux.BUILD <<'EOF'
+          cc_library(
+              name = "opencv",
+              srcs = ["local/lib/libopencv_imgproc.a", "local/lib/libopencv_core.a"],
+              hdrs = glob(["local/include/opencv4/opencv2/**/*.h*"]),
+              includes = ["local/include/opencv4/"],
+              linkstatic = 1,
+              visibility = ["//visibility:public"],
+          )
+          EOF
 
       - if: runner.os == 'Linux'
         name: Build
@@ -104,7 +140,7 @@ jobs:
           bazel build \
             --compilation_mode=opt --strip=always --jobs=auto \
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU \
-            --define=MEDIAPIPE_DISABLE_GPU=1 --define=OPENCV=source \
+            --define=MEDIAPIPE_DISABLE_GPU=1 \
             --define=xnn_enable_avxvnniint8=false \
             --repo_env=CC=clang-18 \
             --action_env=PYTHON_BIN_PATH="$(which python)" \
