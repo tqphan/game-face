@@ -17,7 +17,7 @@ name: MediaPipe
 # lists them):
 #   Linux    Ubuntu 24.04's libopencv (needs glibc 2.39 or newer)
 #   Windows  opencv.org's release, checked against the digest GitHub publishes
-#   macOS    Homebrew's opencv
+#   macOS    Homebrew's opencv@4 (MediaPipe needs the 4.x API; "opencv" is 5.x)
 
 on:
   push:
@@ -158,8 +158,8 @@ jobs:
       - if: runner.os == 'macOS'
         name: OpenCV (Homebrew)
         run: |
-          brew install opencv
-          brew list --versions opencv
+          brew install opencv@4
+          brew list --versions opencv@4
           prefix="$(brew --prefix)"
           # @macos_opencv points at /usr/local (Intel Homebrew); Apple silicon Homebrew lives elsewhere.
           python - "$prefix" <<'EOF'
@@ -174,9 +174,9 @@ jobs:
           cat > mediapipe/third_party/opencv_macos.BUILD <<'EOF'
           cc_library(
               name = "opencv",
-              srcs = ["opt/opencv/lib/libopencv_core.dylib", "opt/opencv/lib/libopencv_imgproc.dylib"],
-              hdrs = glob(["opt/opencv/include/opencv4/opencv2/**/*.h*"]),
-              includes = ["opt/opencv/include/opencv4/"],
+              srcs = ["opt/opencv@4/lib/libopencv_core.dylib", "opt/opencv@4/lib/libopencv_imgproc.dylib"],
+              hdrs = glob(["opt/opencv@4/include/opencv4/opencv2/**/*.h*"]),
+              includes = ["opt/opencv@4/include/opencv4/"],
               linkstatic = 1,
               visibility = ["//visibility:public"],
           )
