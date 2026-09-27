@@ -209,6 +209,8 @@ jobs:
       # keeps paths under Windows' length limit. rules_swift (there for Apple
       # builds) autoconfigures a Windows toolchain that requires swiftc.exe;
       # nothing here uses Swift, so an empty repository stands in for it.
+      # MSVC 14.5x's <stdatomic.h> (used by pthreadpool) requires C11, and
+      # Bazel sets no C standard.
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -223,6 +225,7 @@ jobs:
           bazel --output_user_root=C:/_bzl build `
             --compilation_mode=opt --jobs=auto `
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
+            --conlyopt=/std:c11 --host_conlyopt=/std:c11 `
             --define=MEDIAPIPE_DISABLE_GPU=1 `
             "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
