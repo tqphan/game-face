@@ -247,21 +247,33 @@ jobs:
           EOF
           grep -n -A6 'module_name = "protobuf"' MODULE.bazel
 
-      # legacy_calculator_support.h declares Scoped<C>::current_ ABSL_CONST_INIT
-      # (constinit) off Apple, but the .cc defines it without; MSVC rejects the
-      # mismatch (C2475) where Clang doesn't.
+      # Source that Clang accepts and MSVC doesn't:
+      # - legacy_calculator_support.h declares Scoped<C>::current_
+      #   ABSL_CONST_INIT (constinit) off Apple; the .cc defines it without (C2475).
+      # - api3/calculator_context.h puts the int&... DoNotSpecify guard pack
+      #   right after typename... Rest in two internal helpers (C3547). Their
+      #   callers pass only the payload types, so dropping the guard there
+      #   changes nothing.
       - if: runner.os == 'Windows'
-        name: Patch MediaPipe (constinit on MSVC)
+        name: Patch MediaPipe (MSVC)
         working-directory: mediapipe
         run: |
           python - <<'EOF'
           import pathlib
-          p = pathlib.Path("mediapipe/framework/legacy_calculator_support.cc")
-          s = p.read_text()
-          old = "template <>\nthread_local "
-          if s.count(old) != 2:
-              raise SystemExit(f"{p}: expected 2 thread_local definitions; update this step")
-          p.write_text(s.replace(old, "template <>\nABSL_CONST_INIT thread_local "))
+          edits = [
+              ("mediapipe/framework/legacy_calculator_support.cc",
+               "template <>\nthread_local ",
+               "template <>\nABSL_CONST_INIT thread_local ", 2),
+              ("mediapipe/framework/api3/calculator_context.h",
+               "typename... Rest, int&... DoNotSpecify,\n          typename F>",
+               "typename... Rest,\n          typename F>", 2),
+          ]
+          for path, old, new, count in edits:
+              p = pathlib.Path(path)
+              s = p.read_text()
+              if s.count(old) != count:
+                  raise SystemExit(f"{path}: expected {count} matches of {old!r}; update this step")
+              p.write_text(s.replace(old, new))
           EOF
 
       # ---- Build -------------------------------------------------------------
