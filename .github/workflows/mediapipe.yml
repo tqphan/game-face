@@ -184,6 +184,41 @@ jobs:
           )
           EOF
 
+      # With MSVC, protobuf drops its zlib dependency (and HAVE_ZLIB), yet
+      # gzip_stream.h includes <zlib.h> unconditionally, which MediaPipe pulls
+      # in. Keep the dependency so the header is found.
+      - if: runner.os == 'Windows'
+        name: Patch protobuf (zlib on MSVC)
+        working-directory: mediapipe
+        run: |
+          python - <<'EOF'
+          import pathlib
+          patch = (
+              "--- a/src/google/protobuf/io/BUILD.bazel\n"
+              "+++ b/src/google/protobuf/io/BUILD.bazel\n"
+              "@@ -160,10 +160,7 @@\n"
+              '         "//src/google/protobuf/stubs",\n'
+              '         "@abseil-cpp//absl/log:absl_check",\n'
+              '         "@abseil-cpp//absl/log:absl_log",\n'
+              "-    ] + select({\n"
+              '-        "//build_defs:config_msvc": [],\n'
+              '-        "//conditions:default": ["@zlib"],\n'
+              "-    }),\n"
+              '+    ] + ["@zlib"],\n'
+              " )\n"
+              " \n"
+              " cc_library(\n"
+          )
+          pathlib.Path("third_party/protobuf_msvc_zlib.patch").write_bytes(patch.encode())
+          m = pathlib.Path("MODULE.bazel")
+          s = m.read_text()
+          old = 'strip_prefix = "protobuf-6.31.1",'
+          if s.count(old) != 1:
+              raise SystemExit("protobuf archive_override not found; update this step for the new protobuf version")
+          m.write_text(s.replace(old, old + '\n    patches = ["//third_party:protobuf_msvc_zlib.patch"],\n    patch_strip = 1,'))
+          EOF
+          grep -n -A6 'module_name = "protobuf"' MODULE.bazel
+
       # ---- Build -------------------------------------------------------------
 
       - if: runner.os == 'Linux'
