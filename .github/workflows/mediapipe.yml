@@ -33,10 +33,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: mediapipe-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   MEDIAPIPE_REF: ${{ inputs.ref || 'v1.0.0' }}
   # From https://api.github.com/repos/opencv/opencv/releases/tags/<version> (asset "digest").
@@ -48,6 +44,11 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 360
+    # Per platform and never cancelled: a cancelled job saves no Bazel cache,
+    # so a newer push waits for the running build of that platform instead.
+    concurrency:
+      group: mediapipe-${{ github.ref }}-${{ matrix.artifact }}
+      cancel-in-progress: false
     defaults:
       run:
         shell: bash
@@ -59,8 +60,9 @@ jobs:
             os: ubuntu-24.04
             lib: libmediapipe.so
             artifact: libmediapipe-linux-x86_64
+          # VS 2022; windows-latest's VS 2026 compiler is newer than MediaPipe v1.0.0.
           - name: Windows x86_64
-            os: windows-latest
+            os: windows-2022
             lib: libmediapipe.dll
             artifact: libmediapipe-windows-x86_64
           - name: macOS arm64
@@ -209,8 +211,9 @@ jobs:
       # keeps paths under Windows' length limit. rules_swift (there for Apple
       # builds) autoconfigures a Windows toolchain that requires swiftc.exe;
       # nothing here uses Swift, so an empty repository stands in for it.
-      # MSVC 14.5x's <stdatomic.h> (used by pthreadpool) requires C11, and
-      # Bazel sets no C standard.
+      # MSVC's <stdatomic.h> (used by pthreadpool) requires C11, and Bazel sets
+      # no C standard. Protobuf refuses MSVC under Bazel without its opt-in
+      # define (support ends in protobuf 34).
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -226,7 +229,7 @@ jobs:
             --compilation_mode=opt --jobs=auto `
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
             --conlyopt=/std:c11 --host_conlyopt=/std:c11 `
-            --define=MEDIAPIPE_DISABLE_GPU=1 `
+            --define=MEDIAPIPE_DISABLE_GPU=1 --define=protobuf_allow_msvc=true `
             "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
             //mediapipe/tasks/c:libmediapipe
