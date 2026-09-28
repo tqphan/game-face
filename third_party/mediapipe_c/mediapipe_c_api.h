@@ -2,11 +2,11 @@
  * Declarations for the MediaPipe Tasks C API exported by libmediapipe,
  * limited to what game-face uses (face landmarker + images).
  *
- * The pip wheel ships the library but no headers. These declarations were
- * transcribed from the ctypes bindings in the same wheel (mediapipe 1.0.1:
- * the .py files under mediapipe/tasks/python/{core,vision,components/containers}), so they
- * match that binary exactly. Re-check them whenever MEDIAPIPE_VERSION in
- * cmake/FetchMediaPipe.cmake changes.
+ * Originally transcribed from the ctypes bindings in PyPI's mediapipe 1.0.1
+ * wheel (the .py files under mediapipe/tasks/python/{core,vision,components/containers}),
+ * and checked against the C headers of MediaPipe v1.0.0 (mediapipe/tasks/c), the
+ * source the library is now built from (see cmake/FetchMediaPipe.cmake). Re-check
+ * them against those headers whenever MEDIAPIPE_VERSION changes.
  *
  * Functions are declared as pointer types because the library is loaded at
  * runtime. Status-returning functions return 0 (kMpOk) on success; on failure,

@@ -1,87 +1,96 @@
-# Downloads the pinned MediaPipe wheel from PyPI for the target platform,
-# checks its SHA-256, and extracts libmediapipe (the Tasks C API library).
+# Downloads libmediapipe (the Tasks C API library) for the target platform from
+# this repository's GitHub Release, checks the zip's SHA-256, and extracts it.
+# The release is built by .github/workflows/mediapipe.yml from MediaPipe's
+# open-source tree, without the usage logger in PyPI's mediapipe wheels.
 #
 # Sets:
-#   MEDIAPIPE_LIBRARY   full path to libmediapipe.{dll,so,dylib}
+#   MEDIAPIPE_LIBRARY        full path to libmediapipe.{dll,so,dylib}
+#   MEDIAPIPE_RUNTIME_FILES  the libraries that ship next to the app: libmediapipe,
+#                            plus opencv_world<ver>.dll on Windows (Linux and macOS
+#                            link OpenCV statically)
+#   MEDIAPIPE_LICENSE_FILES  MediaPipe's and OpenCV's licenses (both Apache-2.0)
 #
-# Offline builds: set GAME_FACE_MEDIAPIPE_WHEEL to a local copy of the wheel
-# (its hash is still checked).
+# Offline builds: set GAME_FACE_MEDIAPIPE_ZIP to a local copy of the zip (its
+# hash is still checked).
 #
-# When bumping MEDIAPIPE_VERSION, update the hashes below from
-# https://pypi.org/pypi/mediapipe/<version>/json and re-check
-# third_party/mediapipe_c/mediapipe_c_api.h against the new ctypes bindings.
+# To update: push a commit with "[mediapipe release]" in its message, then set
+# MEDIAPIPE_RELEASE and the hashes below from that release's SHA256SUMS. When
+# MEDIAPIPE_VERSION changes, re-check third_party/mediapipe_c/mediapipe_c_api.h
+# against that MediaPipe tag's mediapipe/tasks/c headers.
 
-set(MEDIAPIPE_VERSION 1.0.1)
-set(_mp_base https://files.pythonhosted.org/packages)
+set(MEDIAPIPE_VERSION v1.0.0)
+set(MEDIAPIPE_RELEASE mediapipe-v1.0.0-ec499d2)
+set(_mp_base https://github.com/tqphan/game-face/releases/download/${MEDIAPIPE_RELEASE})
 
-if(WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM64|arm64|aarch64)$")
-    set(_mp_path 49/47/8a901eade7352051ae4d7b0b070ad8a84bde9cbf3092afd69088982842bb)
-    set(_mp_tag win_arm64)
-    set(_mp_sha256 4bbbb3838a99f7fdcd3cb0e071560120df45ddc48c1ad097ef1457f8600e0e77)
-    set(_mp_lib libmediapipe.dll)
-elseif(WIN32)
-    set(_mp_path 22/71/42365b0aec2a96dfbeb3441220fe8dccd9a833f36adfecf3aa9f211c449b)
-    set(_mp_tag win_amd64)
-    set(_mp_sha256 96dc9de6bd04a6315ef424fda5c48e0929f2d78317295e75bc32c0bceeab517b)
+if(WIN32)
+    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|x86_64)$")
+        message(FATAL_ERROR "libmediapipe is built for x86_64 Windows only, not ${CMAKE_SYSTEM_PROCESSOR}.")
+    endif()
+    set(_mp_platform windows-x86_64)
+    set(_mp_sha256 e8177466c2139f7d5b62226fd9f33025668405f0e880611d91e15475e30aefcf)
     set(_mp_lib libmediapipe.dll)
 elseif(APPLE)
-    # PyPI has no x86_64 macOS wheel, so Intel Macs are not supported.
     if(CMAKE_OSX_ARCHITECTURES AND NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
-        message(FATAL_ERROR "MediaPipe ${MEDIAPIPE_VERSION} only ships an arm64 macOS library; "
-                            "set CMAKE_OSX_ARCHITECTURES=arm64.")
+        message(FATAL_ERROR "libmediapipe is built for arm64 macOS only; set CMAKE_OSX_ARCHITECTURES=arm64.")
     endif()
-    set(_mp_path 18/56/911762884caba685dc8156d0136c58196a228c2b447023cfa0cfdb32f6c5)
-    set(_mp_tag macosx_11_0_arm64)
-    set(_mp_sha256 0a9fb67957f7d28e84f485e9c6716a43367b3f6f07170f31c3f72cac1addd031)
+    if(NOT CMAKE_OSX_ARCHITECTURES AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+        message(FATAL_ERROR "libmediapipe is built for arm64 macOS only (Apple silicon), not ${CMAKE_SYSTEM_PROCESSOR}.")
+    endif()
+    set(_mp_platform macos-arm64)
+    set(_mp_sha256 8aee7aacf4ff6ec2a7424254fee4de4109f2e128fee1724248a495aa4abe98fc)
     set(_mp_lib libmediapipe.dylib)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
-    set(_mp_path 16/9d/515c6ebc98db21484b2b93b7403464d08fb7861b6430752801bc75d29372)
-    set(_mp_tag manylinux_2_28_aarch64)
-    set(_mp_sha256 d6050e773dc6698eb86324090f61af1ccab28a6f1e9f77d98fe0611cef707997)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+    # Built on Ubuntu 24.04, so it needs glibc 2.39 or newer.
+    set(_mp_platform linux-x86_64)
+    set(_mp_sha256 13e2a730dcbaf94f00db27277b0d6c28ac231a6e99bcc7140ef671c69a4666d0)
     set(_mp_lib libmediapipe.so)
 else()
-    set(_mp_path 2a/58/bdd5bada89d7a132375df05e962bf702c148b47043dca98d820d9395152b)
-    set(_mp_tag manylinux_2_28_x86_64)
-    set(_mp_sha256 121522251afc3c135e4b7b0c341dd5e050ad1ec87631127484f3c389ae385044)
-    set(_mp_lib libmediapipe.so)
+    message(FATAL_ERROR "libmediapipe is built for Windows x86_64, Linux x86_64 and macOS arm64 only, "
+                        "not ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}.")
 endif()
 
-set(_mp_wheel_name mediapipe-${MEDIAPIPE_VERSION}-py3-none-${_mp_tag}.whl)
-set(_mp_dir ${CMAKE_BINARY_DIR}/_deps/mediapipe-${MEDIAPIPE_VERSION}-${_mp_tag})
-set(MEDIAPIPE_LIBRARY ${_mp_dir}/mediapipe/tasks/c/${_mp_lib})
+set(_mp_zip_name libmediapipe-${MEDIAPIPE_VERSION}-${_mp_platform}.zip)
+# MEDIAPIPE_RELEASE starts with "mediapipe-", which ci.yml's cache path matches.
+set(_mp_dir ${CMAKE_BINARY_DIR}/_deps/${MEDIAPIPE_RELEASE}-${_mp_platform})
+set(MEDIAPIPE_LIBRARY ${_mp_dir}/${_mp_lib})
 
 if(NOT EXISTS ${MEDIAPIPE_LIBRARY})
-    if(GAME_FACE_MEDIAPIPE_WHEEL)
-        set(_mp_wheel ${GAME_FACE_MEDIAPIPE_WHEEL})
-        file(SHA256 ${_mp_wheel} _mp_actual)
+    if(GAME_FACE_MEDIAPIPE_ZIP)
+        set(_mp_zip ${GAME_FACE_MEDIAPIPE_ZIP})
+        file(SHA256 ${_mp_zip} _mp_actual)
         if(NOT _mp_actual STREQUAL _mp_sha256)
-            message(FATAL_ERROR "${_mp_wheel}: SHA-256 ${_mp_actual} does not match ${_mp_sha256}")
+            message(FATAL_ERROR "${_mp_zip}: SHA-256 ${_mp_actual} does not match ${_mp_sha256}")
         endif()
     else()
-        set(_mp_wheel ${_mp_dir}/${_mp_wheel_name})
-        message(STATUS "Downloading ${_mp_wheel_name}")
-        file(DOWNLOAD ${_mp_base}/${_mp_path}/${_mp_wheel_name} ${_mp_wheel}
+        set(_mp_zip ${CMAKE_BINARY_DIR}/_deps/${_mp_zip_name})
+        message(STATUS "Downloading ${_mp_zip_name} (${MEDIAPIPE_RELEASE})")
+        file(DOWNLOAD ${_mp_base}/${_mp_zip_name} ${_mp_zip}
             EXPECTED_HASH SHA256=${_mp_sha256}
             TLS_VERIFY ON
             STATUS _mp_status)
         list(GET _mp_status 0 _mp_code)
         if(NOT _mp_code EQUAL 0)
-            message(FATAL_ERROR "Downloading ${_mp_wheel_name} failed: ${_mp_status}")
+            message(FATAL_ERROR "Downloading ${_mp_zip_name} failed: ${_mp_status}")
         endif()
     endif()
 
-    file(ARCHIVE_EXTRACT INPUT ${_mp_wheel} DESTINATION ${_mp_dir}
-        PATTERNS "mediapipe/tasks/c/${_mp_lib}")
+    file(ARCHIVE_EXTRACT INPUT ${_mp_zip} DESTINATION ${_mp_dir})
     if(NOT EXISTS ${MEDIAPIPE_LIBRARY})
-        message(FATAL_ERROR "${_mp_lib} not found in ${_mp_wheel_name}")
+        message(FATAL_ERROR "${_mp_lib} not found in ${_mp_zip_name}")
     endif()
-    file(REMOVE ${_mp_dir}/${_mp_wheel_name})
+    if(NOT GAME_FACE_MEDIAPIPE_ZIP)
+        file(REMOVE ${_mp_zip})
+    endif()
 endif()
 
-message(STATUS "MediaPipe ${MEDIAPIPE_VERSION}: ${MEDIAPIPE_LIBRARY}")
+file(GLOB MEDIAPIPE_RUNTIME_FILES ${_mp_dir}/*.dll ${_mp_dir}/*.so ${_mp_dir}/*.dylib)
+set(MEDIAPIPE_LICENSE_FILES ${_mp_dir}/LICENSE.mediapipe ${_mp_dir}/LICENSE.opencv)
 
-# Copies libmediapipe and the face landmarker model next to a target's binary,
-# or into Contents/Frameworks and Contents/Resources of a macOS app bundle.
+message(STATUS "MediaPipe ${MEDIAPIPE_VERSION} (${MEDIAPIPE_RELEASE}): ${MEDIAPIPE_LIBRARY}")
+
+# Copies libmediapipe, the libraries it needs, and the face landmarker model
+# next to a target's binary, or into Contents/Frameworks and Contents/Resources
+# of a macOS app bundle.
 function(game_face_deploy_mediapipe target)
     get_target_property(bundle ${target} MACOSX_BUNDLE)
     if(APPLE AND bundle)
@@ -93,21 +102,24 @@ function(game_face_deploy_mediapipe target)
     endif()
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${lib_dir} ${model_dir}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MEDIAPIPE_LIBRARY} ${lib_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MEDIAPIPE_RUNTIME_FILES} ${lib_dir}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GAME_FACE_FACE_MODEL} ${model_dir}
         VERBATIM)
 endfunction()
 
-# Installs libmediapipe and the model where game_face_deploy_mediapipe puts
-# them in the build tree. For a bundle, call after install(TARGETS ... BUNDLE).
+# Installs what game_face_deploy_mediapipe copies, plus the licenses. For a
+# bundle, call after install(TARGETS ... BUNDLE).
 function(game_face_install_mediapipe target)
     get_target_property(bundle ${target} MACOSX_BUNDLE)
     if(APPLE AND bundle)
         set(contents ${target}.app/Contents)
-        install(FILES ${MEDIAPIPE_LIBRARY} DESTINATION ${contents}/Frameworks)
+        install(FILES ${MEDIAPIPE_RUNTIME_FILES} DESTINATION ${contents}/Frameworks)
         install(FILES ${GAME_FACE_FACE_MODEL} DESTINATION ${contents}/Resources)
+        install(FILES ${MEDIAPIPE_LICENSE_FILES} DESTINATION ${contents}/Resources/licenses)
     else()
-        install(FILES ${MEDIAPIPE_LIBRARY} ${GAME_FACE_FACE_MODEL}
+        install(FILES ${MEDIAPIPE_RUNTIME_FILES} ${GAME_FACE_FACE_MODEL}
             DESTINATION ${CMAKE_INSTALL_BINDIR})
+        install(FILES ${MEDIAPIPE_LICENSE_FILES}
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/game-face)
     endif()
 endfunction()
