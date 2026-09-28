@@ -12,18 +12,20 @@ name: MediaPipe
 # run needs the file on the default branch). The Bazel flags follow
 # MediaPipe's setup.py.
 #
-# OpenCV comes prebuilt and is linked dynamically, so each artifact holds the
-# OpenCV libraries libmediapipe needs at runtime (the "Dependencies" output
-# lists them):
-#   Linux    Ubuntu 24.04's libopencv (needs glibc 2.39 or newer)
-#   Windows  opencv.org's release, checked against the digest GitHub publishes
-#   macOS    Homebrew's opencv@4 (MediaPipe needs the 4.x API; "opencv" is 5.x)
+# OpenCV is 4.14.0 everywhere, with only the core and imgproc modules the
+# Tasks library uses:
+#   Linux, macOS  built from OpenCV's source at the 4.14.0 tag (commit checked)
+#                 and linked statically, as MediaPipe's manylinux image does, so
+#                 libmediapipe needs only the OS and C++ runtime. Linux needs
+#                 glibc 2.39 or newer (Ubuntu 24.04); macOS 12 or newer.
+#   Windows       opencv.org's prebuilt opencv_world DLL, checked against the
+#                 digest GitHub publishes, shipped next to libmediapipe.dll.
 #
 # Publishing: a pushed commit whose message contains "[mediapipe release]" (or
 # a manual run with "release" set) builds every platform and publishes a
 # GitHub Release tagged mediapipe-<MediaPipe ref>-<short commit>, with one zip
-# per platform (library, OpenCV libraries, licenses, checksums) and a
-# SHA256SUMS of the zips. cmake/FetchMediaPipe.cmake pins those zips by hash.
+# per platform (libraries, licenses, checksums) and a SHA256SUMS of the zips.
+# cmake/FetchMediaPipe.cmake pins those zips by hash.
 # A release is never overwritten; a new build gets a new commit and tag.
 
 on:
@@ -49,9 +51,12 @@ permissions:
 
 env:
   MEDIAPIPE_REF: ${{ inputs.ref || 'v1.0.0' }}
+  OPENCV_VERSION: '4.14.0'
+  # The commit the 4.14.0 tag points to (api.github.com/repos/opencv/opencv/git/ref/tags/4.14.0).
+  OPENCV_COMMIT: 0654a42e19215ef25b1d367d822f3c630447e7c7
   # From https://api.github.com/repos/opencv/opencv/releases/tags/<version> (asset "digest").
-  OPENCV_WINDOWS_VERSION: '4.14.0'
   OPENCV_WINDOWS_SHA256: 5f266a8b73bed535962d7e861a6457e32a0dd5f463ad0a7cf8707a135469be63
+  MACOS_MIN: '12.0'
 
 jobs:
   # Picks the platforms: the "platforms" input on a manual run, or a
@@ -158,24 +163,85 @@ jobs:
 
       # Same compiler setup as MediaPipe's manylinux image: Clang 18 on GCC 14's libstdc++.
       - if: runner.os == 'Linux'
-        name: OpenCV (Ubuntu)
+        name: Compiler (Clang 18)
+        run: sudo apt-get update && sudo apt-get install -y clang-18 g++-14 libstdc++-14-dev
+
+      - if: runner.os != 'Windows'
+        id: opencv-cache
+        uses: actions/cache@v4
+        with:
+          path: opencv-install
+          key: opencv-${{ env.OPENCV_COMMIT }}-core-imgproc-static-${{ matrix.os }}-macos${{ env.MACOS_MIN }}
+
+      # Everything OpenCV would pull in beyond the OS is off: LAPACK (Accelerate
+      # on macOS), OpenCL, and the IPP/KleidiCV/Carotene accelerators, which
+      # each add another static library.
+      - if: runner.os != 'Windows' && steps.opencv-cache.outputs.cache-hit != 'true'
+        name: Build OpenCV (source, static)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-18 g++-14 libstdc++-14-dev libopencv-core-dev libopencv-imgproc-dev
-          dpkg-query -W libopencv-core-dev
-          # @linux_opencv is a local repository rooted at /usr.
-          cat > mediapipe/third_party/opencv_linux.BUILD <<'EOF'
-          cc_library(
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git opencv-src
+          actual="$(git -C opencv-src rev-parse HEAD)"
+          if [ "$actual" != "$OPENCV_COMMIT" ]; then
+            echo "::error::OpenCV tag $OPENCV_VERSION is at $actual, expected $OPENCV_COMMIT"
+            exit 1
+          fi
+          if [ "$RUNNER_OS" = Linux ]; then
+            platform=(-DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18)
+          else
+            platform=(-DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOS_MIN")
+          fi
+          cmake -S opencv-src -B opencv-build "${platform[@]}" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/opencv-install" \
+            -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DBUILD_SHARED_LIBS=OFF -DBUILD_LIST=core,imgproc \
+            -DWITH_LAPACK=OFF -DWITH_OPENCL=OFF -DWITH_EIGEN=OFF -DWITH_OPENMP=OFF -DWITH_TBB=OFF \
+            -DWITH_IPP=OFF -DWITH_ITT=OFF -DWITH_KLEIDICV=OFF -DWITH_CAROTENE=OFF \
+            -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF -DBUILD_opencv_python3=OFF -DOPENCV_GENERATE_PKGCONFIG=OFF
+          cmake --build opencv-build -j "$(getconf _NPROCESSORS_ONLN)"
+          cmake --install opencv-build
+
+      - if: runner.os != 'Windows'
+        name: OpenCV (use static build)
+        run: |
+          set -euo pipefail
+          find opencv-install/lib -name '*.a' | sort
+          # Must be exactly core and imgproc; anything else means an option above
+          # let a third-party library in.
+          extra="$(find opencv-install/lib -name '*.a' ! -name libopencv_core.a ! -name libopencv_imgproc.a)"
+          if [ -n "$extra" ]; then
+            echo "::error::Unexpected static libraries in the OpenCV build:"
+            echo "$extra"
+            exit 1
+          fi
+          # imgproc before core: GNU ld resolves static libraries in order.
+          build='cc_library(
               name = "opencv",
-              hdrs = glob([
-                  "include/x86_64-linux-gnu/opencv4/opencv2/cvconfig.h",
-                  "include/opencv4/opencv2/**/*.h*",
-              ]),
-              includes = ["include/x86_64-linux-gnu/opencv4/", "include/opencv4/"],
-              linkopts = ["-l:libopencv_core.so", "-l:libopencv_imgproc.so"],
+              srcs = ["lib/libopencv_imgproc.a", "lib/libopencv_core.a"],
+              hdrs = glob(["include/opencv4/opencv2/**/*.h*"]),
+              includes = ["include/opencv4/"],
+              linkstatic = 1,
               visibility = ["//visibility:public"],
-          )
+          )'
+          if [ "$RUNNER_OS" = Linux ]; then
+            repo=linux_opencv; file=opencv_linux.BUILD
+          else
+            repo=macos_opencv; file=opencv_macos.BUILD
+          fi
+          printf '%s\n' "$build" > "mediapipe/third_party/$file"
+          # Point the @linux_opencv / @macos_opencv local repository at the build.
+          python - "$repo" "$PWD/opencv-install" <<'EOF'
+          import pathlib, re, sys
+          repo, path = sys.argv[1], sys.argv[2]
+          p = pathlib.Path("mediapipe/WORKSPACE")
+          s = p.read_text()
+          t = re.sub(r'(name = "%s",.*?path = )"[^"]*"' % repo, r'\g<1>"%s"' % path, s, count=1, flags=re.S)
+          if t == s:
+              sys.exit(repo + " repository not found in WORKSPACE")
+          p.write_text(t)
           EOF
+          grep -n -A4 "name = \"$repo\"" mediapipe/WORKSPACE
 
       - if: runner.os == 'Windows'
         name: OpenCV (opencv.org)
@@ -183,7 +249,7 @@ jobs:
           (
             cd "$RUNNER_TEMP"
             curl -fsSL --retry 3 -o opencv.exe \
-              "https://github.com/opencv/opencv/releases/download/$OPENCV_WINDOWS_VERSION/opencv-$OPENCV_WINDOWS_VERSION-windows.exe"
+              "https://github.com/opencv/opencv/releases/download/$OPENCV_VERSION/opencv-$OPENCV_VERSION-windows.exe"
             echo "$OPENCV_WINDOWS_SHA256  opencv.exe" | sha256sum -c -
             # A 7-Zip self-extractor; its top folder is opencv/. @windows_opencv is C:\opencv\build.
             7z x -y -oC:/ opencv.exe > /dev/null
@@ -198,33 +264,6 @@ jobs:
               ),
               hdrs = glob(["include/opencv2/**/*.h*"]),
               includes = ["include/"],
-              linkstatic = 1,
-              visibility = ["//visibility:public"],
-          )
-          EOF
-
-      - if: runner.os == 'macOS'
-        name: OpenCV (Homebrew)
-        run: |
-          brew install opencv@4
-          brew list --versions opencv@4
-          prefix="$(brew --prefix)"
-          # @macos_opencv points at /usr/local (Intel Homebrew); Apple silicon Homebrew lives elsewhere.
-          python - "$prefix" <<'EOF'
-          import pathlib, re, sys
-          p = pathlib.Path("mediapipe/WORKSPACE")
-          s = p.read_text()
-          t = re.sub(r'(name = "macos_opencv",.*?path = )"[^"]*"', r'\1"%s"' % sys.argv[1], s, count=1, flags=re.S)
-          if t == s:
-              sys.exit("macos_opencv repository not found in WORKSPACE")
-          p.write_text(t)
-          EOF
-          cat > mediapipe/third_party/opencv_macos.BUILD <<'EOF'
-          cc_library(
-              name = "opencv",
-              srcs = ["opt/opencv@4/lib/libopencv_core.dylib", "opt/opencv@4/lib/libopencv_imgproc.dylib"],
-              hdrs = glob(["opt/opencv@4/include/opencv4/opencv2/**/*.h*"]),
-              includes = ["opt/opencv@4/include/opencv4/"],
               linkstatic = 1,
               visibility = ["//visibility:public"],
           )
@@ -310,9 +349,6 @@ jobs:
             //mediapipe/tasks/c:libmediapipe
           mkdir -p "$GITHUB_WORKSPACE/out"
           cp -L bazel-bin/mediapipe/tasks/c/${{ matrix.lib }} "$GITHUB_WORKSPACE/out/"
-          for so in $(ldd "$GITHUB_WORKSPACE/out/${{ matrix.lib }}" | awk '/libopencv_/ {print $3}'); do
-            cp -L "$so" "$GITHUB_WORKSPACE/out/"
-          done
 
       # PowerShell, because Git Bash rewrites the //target argument into a path.
       # Bazel's own genrules need MSYS2's bash (BAZEL_SH). The short output root
@@ -378,15 +414,17 @@ jobs:
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU \
             --define=MEDIAPIPE_DISABLE_GPU=1 \
             --cpu=darwin_arm64 --ios_multi_cpus=i386,x86_64,armv7,arm64 \
+            --macos_minimum_os="$MACOS_MIN" \
             --action_env=PYTHON_BIN_PATH="$(which python)" \
             //mediapipe/tasks/c:libmediapipe
           mkdir -p "$GITHUB_WORKSPACE/out"
-          cp -L bazel-bin/mediapipe/tasks/c/${{ matrix.lib }} "$GITHUB_WORKSPACE/out/"
-          # Homebrew's OpenCV dylibs and what they link against, for bundling later.
-          for dylib in $(otool -L "$GITHUB_WORKSPACE/out/${{ matrix.lib }}" | awk '/libopencv_/ {print $1}'); do
-            cp -L "$dylib" "$GITHUB_WORKSPACE/out/"
-            otool -L "$dylib"
-          done
+          lib="$GITHUB_WORKSPACE/out/${{ matrix.lib }}"
+          cp -L bazel-bin/mediapipe/tasks/c/${{ matrix.lib }} "$lib"
+          chmod u+w "$lib"
+          # Bazel leaves a bazel-out/... install name; give it the usual @rpath one
+          # and re-sign (ad hoc), since editing the header invalidates the signature.
+          install_name_tool -id @rpath/libmediapipe.dylib "$lib"
+          codesign --force --sign - "$lib"
 
       # ---- Checks ------------------------------------------------------------
 
@@ -398,6 +436,14 @@ jobs:
         run: |
           lib=out/${{ matrix.lib }}
           echo "Dependencies:"; readelf -d "$lib" | grep NEEDED
+          # OpenCV is linked in, so only glibc and the C++ runtime may remain.
+          other="$(readelf -d "$lib" | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p' \
+            | grep -vxE 'libc\.so\.6|libm\.so\.6|libstdc\+\+\.so\.6|libgcc_s\.so\.1|ld-linux-x86-64\.so\.2|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1' || true)"
+          if [ -n "$other" ]; then
+            echo "::error::$lib needs libraries outside glibc and the C++ runtime:"
+            echo "$other"
+            exit 1
+          fi
           net="$(nm -D --undefined-only "$lib" | awk '{print $NF}' | sed 's/@.*//' \
             | grep -xE 'socket|connect|getaddrinfo|gethostbyname|curl_.*|SSL_.*' || true)"
           if [ -n "$net" ]; then
@@ -429,6 +475,21 @@ jobs:
         run: |
           lib=out/${{ matrix.lib }}
           echo "Dependencies:"; otool -L "$lib"
+          # OpenCV is linked in, so only the OS may remain (no Homebrew or other paths).
+          other="$(otool -L "$lib" | tail -n +2 | awk '{print $1}' \
+            | grep -vE '^(/usr/lib/|/System/Library/|@rpath/libmediapipe\.dylib$)' || true)"
+          if [ -n "$other" ]; then
+            echo "::error::$lib links libraries outside the OS:"
+            echo "$other"
+            exit 1
+          fi
+          minos="$(otool -l "$lib" | awk '/LC_BUILD_VERSION/ {f=1} f && $1 == "minos" {print $2; exit}')"
+          echo "Minimum macOS: $minos"
+          if [ "$minos" != "$MACOS_MIN" ]; then
+            echo "::error::$lib targets macOS $minos, expected $MACOS_MIN"
+            exit 1
+          fi
+          codesign --verify --verbose "$lib"
           net="$( { nm -gu "$lib" | grep -xE '_(socket|connect|getaddrinfo|gethostbyname|curl_.*|SSL_.*)';
                     otool -L "$lib" | grep -E 'CFNetwork|Network\.framework|libcurl'; } || true)"
           if [ -n "$net" ]; then
@@ -438,19 +499,13 @@ jobs:
           fi
           echo "No network imports."
 
-      # Both are Apache-2.0, which asks for the license to travel with binaries.
-      # OpenCV's comes from its repository at the version actually linked.
+      # Both are Apache-2.0, which asks for the license to travel with binaries
+      # (OpenCV is linked into libmediapipe on Linux and macOS).
       - name: Licenses
         run: |
           set -euo pipefail
           cp mediapipe/LICENSE out/LICENSE.mediapipe
-          case "$RUNNER_OS" in
-            Linux)   v="$(dpkg-query -W -f='${Version}' libopencv-core-dev | cut -d+ -f1)" ;;
-            Windows) v="$OPENCV_WINDOWS_VERSION" ;;
-            macOS)   v="$(brew list --versions opencv@4 | awk '{print $2}' | cut -d_ -f1)" ;;
-          esac
-          echo "OpenCV $v"
-          curl -fsSL --retry 3 -o out/LICENSE.opencv "https://raw.githubusercontent.com/opencv/opencv/$v/LICENSE"
+          curl -fsSL --retry 3 -o out/LICENSE.opencv "https://raw.githubusercontent.com/opencv/opencv/$OPENCV_COMMIT/LICENSE"
 
       - name: Checksum
         working-directory: out
@@ -508,13 +563,13 @@ jobs:
 
           $source. Workflow: [run $GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID) at game-face commit $GITHUB_SHA.
 
-          | Zip | Compiler | OpenCV (included, linked dynamically) |
-          |---|---|---|
-          | linux-x86_64 | Clang 18, Ubuntu 24.04 (needs glibc 2.39+) | Ubuntu 4.6 core + imgproc |
-          | windows-x86_64 | clang-cl (LLVM) with VS 2022 | opencv.org $OPENCV_WINDOWS_VERSION opencv_world |
-          | macos-arm64 | Apple Clang | Homebrew opencv@4 core + imgproc |
+          | Zip | Compiler | Runs on | OpenCV $OPENCV_VERSION (core, imgproc) |
+          |---|---|---|---|
+          | linux-x86_64 | Clang 18 (Ubuntu 24.04) | glibc 2.39+ | built from source, linked in |
+          | windows-x86_64 | clang-cl (LLVM) with VS 2022 | Windows 10+ | opencv.org opencv_world DLL, included |
+          | macos-arm64 | Apple Clang | macOS $MACOS_MIN+ | built from source, linked in |
 
-          The Linux and macOS OpenCV libraries depend on further system or Homebrew libraries (TBB, BLAS). MediaPipe and OpenCV are Apache-2.0; their licenses are in each zip. SHA256SUMS lists the zips; each zip has its own SHA256SUMS for its files.
+          On Linux and macOS libmediapipe needs nothing beyond the OS and C++ runtime. On Windows it needs the included opencv_world DLL next to it and the Microsoft Visual C++ runtime. MediaPipe and OpenCV are Apache-2.0; their licenses are in each zip. SHA256SUMS lists the zips; each zip has its own SHA256SUMS for its files.
           EOF
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
