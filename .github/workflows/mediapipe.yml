@@ -314,16 +314,32 @@ jobs:
           $swiftStub = "$env:RUNNER_TEMP/swift_local_config" -replace '\\', '/'
           New-Item -ItemType Directory -Force $swiftStub | Out-Null
           New-Item -ItemType File -Force "$swiftStub/BUILD.bazel", "$swiftStub/WORKSPACE" | Out-Null
-          bazel --output_user_root=C:/_bzl build `
-            --compilation_mode=opt --jobs=auto `
-            --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
-            --extra_toolchains=@@rules_cc~~cc_configure_extension~local_config_cc//:cc-toolchain-x64_windows-clang-cl `
-            --extra_execution_platforms=//clang_cl:x64_windows-clang-cl `
-            --host_platform=//clang_cl:x64_windows-clang-cl --compiler=clang-cl `
-            --define=MEDIAPIPE_DISABLE_GPU=1 `
-            "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
-            "--action_env=PYTHON_BIN_PATH=$py" `
-            //mediapipe/tasks/c:libmediapipe
+          $flags = @(
+            '--compilation_mode=opt', '--jobs=auto',
+            '--copt=-DNDEBUG', '--copt=-DLITERT_DISABLE_NPU',
+            '--extra_toolchains=@@rules_cc~~cc_configure_extension~local_config_cc//:cc-toolchain-x64_windows-clang-cl',
+            '--extra_execution_platforms=//clang_cl:x64_windows-clang-cl',
+            '--host_platform=//clang_cl:x64_windows-clang-cl', '--compiler=clang-cl',
+            '--define=MEDIAPIPE_DISABLE_GPU=1',
+            "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub",
+            "--action_env=PYTHON_BIN_PATH=$py"
+          )
+
+          # Diagnostics: which C++ toolchain Bazel picks for a C target, and
+          # how the clang-cl toolchains are declared.
+          Write-Output '::group::C++ toolchain resolution'
+          foreach ($repo in 'rules_cc~~cc_configure_extension~local_config_cc', 'bazel_tools~cc_configure_extension~local_config_cc') {
+            Write-Output "--- @@$repo clang-cl toolchain"
+            bazel --output_user_root=C:/_bzl query --output=build "@@${repo}//:cc-toolchain-x64_windows-clang-cl" 2>&1 | ForEach-Object { "$_" }
+          }
+          Write-Output '--- resolution for @pthreadpool//:pthreadpool'
+          bazel --output_user_root=C:/_bzl cquery @flags `
+            '--toolchain_resolution_debug=@bazel_tools//tools/cpp:toolchain_type' `
+            '@pthreadpool//:pthreadpool' 2>&1 |
+            ForEach-Object { "$_" } | Select-String -Pattern 'ToolchainResolution|ERROR' | Select-Object -First 80
+          Write-Output '::endgroup::'
+
+          bazel --output_user_root=C:/_bzl build @flags //mediapipe/tasks/c:libmediapipe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE/out" | Out-Null
           # Bazel copies the OpenCV DLL next to the library, as setup.py expects.
