@@ -215,7 +215,8 @@ jobs:
       # /experimental:c11atomics, and Bazel sets no C standard. Protobuf
       # refuses MSVC under Bazel without its opt-in define (support ends in
       # protobuf 34). MediaPipe's status macros use __VA_OPT__, which needs
-      # the conforming preprocessor.
+      # the conforming preprocessor. Without /Zc:__cplusplus MSVC reports C++98
+      # and protobuf picks code that fails under C++20 (protobuf#22794).
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -233,6 +234,7 @@ jobs:
             --conlyopt=/std:c11 --host_conlyopt=/std:c11 `
             --conlyopt=/experimental:c11atomics --host_conlyopt=/experimental:c11atomics `
             --copt=/Zc:preprocessor --host_copt=/Zc:preprocessor `
+            --cxxopt=/Zc:__cplusplus --host_cxxopt=/Zc:__cplusplus `
             --define=MEDIAPIPE_DISABLE_GPU=1 --define=protobuf_allow_msvc=true `
             "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
