@@ -211,9 +211,10 @@ jobs:
       # keeps paths under Windows' length limit. rules_swift (there for Apple
       # builds) autoconfigures a Windows toolchain that requires swiftc.exe;
       # nothing here uses Swift, so an empty repository stands in for it.
-      # MSVC's <stdatomic.h> (used by pthreadpool) requires C11, and Bazel sets
-      # no C standard. Protobuf refuses MSVC under Bazel without its opt-in
-      # define (support ends in protobuf 34).
+      # VS 2022's <stdatomic.h> (used by pthreadpool) needs C11 plus
+      # /experimental:c11atomics, and Bazel sets no C standard. Protobuf
+      # refuses MSVC under Bazel without its opt-in define (support ends in
+      # protobuf 34).
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -229,6 +230,7 @@ jobs:
             --compilation_mode=opt --jobs=auto `
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
             --conlyopt=/std:c11 --host_conlyopt=/std:c11 `
+            --conlyopt=/experimental:c11atomics --host_conlyopt=/experimental:c11atomics `
             --define=MEDIAPIPE_DISABLE_GPU=1 --define=protobuf_allow_msvc=true `
             "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
