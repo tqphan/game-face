@@ -18,6 +18,13 @@ name: MediaPipe
 #   Linux    Ubuntu 24.04's libopencv (needs glibc 2.39 or newer)
 #   Windows  opencv.org's release, checked against the digest GitHub publishes
 #   macOS    Homebrew's opencv@4 (MediaPipe needs the 4.x API; "opencv" is 5.x)
+#
+# Publishing: a pushed commit whose message contains "[mediapipe release]" (or
+# a manual run with "release" set) builds every platform and publishes a
+# GitHub Release tagged mediapipe-<MediaPipe ref>-<short commit>, with one zip
+# per platform (library, OpenCV libraries, licenses, checksums) and a
+# SHA256SUMS of the zips. cmake/FetchMediaPipe.cmake pins those zips by hash.
+# A release is never overwritten; a new build gets a new commit and tag.
 
 on:
   push:
@@ -32,6 +39,10 @@ on:
       platforms:
         description: Platforms to build (comma-separated linux, windows, macos)
         default: linux,windows,macos
+      release:
+        description: Publish a GitHub Release (builds every platform)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -45,15 +56,17 @@ env:
 jobs:
   # Picks the platforms: the "platforms" input on a manual run, or a
   # "[mediapipe: windows,macos]" tag in the pushed commit's message; all of
-  # them otherwise.
+  # them otherwise, and always all of them for a release.
   platforms:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.pick.outputs.matrix }}
+      release: ${{ steps.pick.outputs.release }}
     steps:
       - id: pick
         env:
           INPUT: ${{ inputs.platforms }}
+          RELEASE_INPUT: ${{ inputs.release }}
           MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           python3 - <<'EOF'
@@ -67,8 +80,12 @@ jobs:
               {"key": "macos", "name": "macOS arm64", "os": "macos-15",
                "lib": "libmediapipe.dylib", "artifact": "libmediapipe-macos-arm64"},
           ]
+          release = (os.environ["RELEASE_INPUT"] == "true"
+                     or "[mediapipe release]" in os.environ["MESSAGE"])
           wanted = os.environ["INPUT"]
-          if not wanted:
+          if release:
+              wanted = "linux,windows,macos"
+          elif not wanted:
               tag = re.search(r"\[mediapipe:\s*([^\]]*)\]", os.environ["MESSAGE"])
               wanted = tag.group(1) if tag else "linux,windows,macos"
           keys = {k.strip().lower() for k in wanted.split(",") if k.strip()}
@@ -76,9 +93,10 @@ jobs:
           if unknown or not keys:
               raise SystemExit(f"unknown or empty platforms: {sorted(unknown) or wanted!r}")
           include = [p for p in all_platforms if p["key"] in keys]
-          print("Building:", ", ".join(p["name"] for p in include))
+          print("Building:", ", ".join(p["name"] for p in include), "(release)" if release else "")
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
               out.write("matrix=" + json.dumps({"include": include}) + "\n")
+              out.write("release=" + ("true" if release else "false") + "\n")
           EOF
 
   build:
@@ -420,6 +438,20 @@ jobs:
           fi
           echo "No network imports."
 
+      # Both are Apache-2.0, which asks for the license to travel with binaries.
+      # OpenCV's comes from its repository at the version actually linked.
+      - name: Licenses
+        run: |
+          set -euo pipefail
+          cp mediapipe/LICENSE out/LICENSE.mediapipe
+          case "$RUNNER_OS" in
+            Linux)   v="$(dpkg-query -W -f='${Version}' libopencv-core-dev | cut -d+ -f1)" ;;
+            Windows) v="$OPENCV_WINDOWS_VERSION" ;;
+            macOS)   v="$(brew list --versions opencv@4 | awk '{print $2}' | cut -d_ -f1)" ;;
+          esac
+          echo "OpenCV $v"
+          curl -fsSL --retry 3 -o out/LICENSE.opencv "https://raw.githubusercontent.com/opencv/opencv/$v/LICENSE"
+
       - name: Checksum
         working-directory: out
         run: |
@@ -434,3 +466,63 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: out/
+
+  # Runs only when every platform built and passed its checks.
+  publish:
+    needs: [platforms, build]
+    if: needs.platforms.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: libmediapipe-*
+          path: artifacts
+
+      - name: Package
+        id: package
+        run: |
+          set -euo pipefail
+          tag="mediapipe-${MEDIAPIPE_REF}-${GITHUB_SHA::7}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::Release $tag already exists; releases are not overwritten. Push a new commit to publish again."
+            exit 1
+          fi
+          dirs=(artifacts/libmediapipe-*)
+          if [ "${#dirs[@]}" -ne 3 ]; then
+            echo "::error::Expected 3 platform artifacts, got: ${dirs[*]}"
+            exit 1
+          fi
+          mkdir dist
+          for dir in "${dirs[@]}"; do
+            platform="${dir#artifacts/libmediapipe-}"
+            (cd "$dir" && zip -q -r -X "$GITHUB_WORKSPACE/dist/libmediapipe-$MEDIAPIPE_REF-$platform.zip" .)
+          done
+          (cd dist && sha256sum *.zip | tee SHA256SUMS)
+          source="$(cat artifacts/libmediapipe-linux-x86_64/SOURCE.txt)"
+          cat > notes.md <<EOF
+          libmediapipe (the MediaPipe Tasks C API library) built from the open-source MediaPipe tree, without the Clearcut usage logger that PyPI's mediapipe wheels ship from 0.10.35 on. Each library passed \`scripts/check_mediapipe_lib.py\` (no telemetry strings, all C API functions game-face uses) and a check for network imports.
+
+          $source. Workflow: [run $GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID) at game-face commit $GITHUB_SHA.
+
+          | Zip | Compiler | OpenCV (included, linked dynamically) |
+          |---|---|---|
+          | linux-x86_64 | Clang 18, Ubuntu 24.04 (needs glibc 2.39+) | Ubuntu 4.6 core + imgproc |
+          | windows-x86_64 | clang-cl (LLVM) with VS 2022 | opencv.org $OPENCV_WINDOWS_VERSION opencv_world |
+          | macos-arm64 | Apple Clang | Homebrew opencv@4 core + imgproc |
+
+          The Linux and macOS OpenCV libraries depend on further system or Homebrew libraries (TBB, BLAS). MediaPipe and OpenCV are Apache-2.0; their licenses are in each zip. SHA256SUMS lists the zips; each zip has its own SHA256SUMS for its files.
+          EOF
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.package.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: libmediapipe ${{ env.MEDIAPIPE_REF }} without telemetry (${{ steps.package.outputs.tag }})
+          body_path: notes.md
+          make_latest: false
+          files: dist/*
