@@ -171,11 +171,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: opencv-install
-          key: opencv-${{ env.OPENCV_COMMIT }}-core-imgproc-static-${{ matrix.os }}-macos${{ env.MACOS_MIN }}
+          # Bump the trailing number when the OpenCV build options change.
+          key: opencv-${{ env.OPENCV_COMMIT }}-core-imgproc-static-${{ matrix.os }}-macos${{ env.MACOS_MIN }}-2
 
       # Everything OpenCV would pull in beyond the OS is off: LAPACK (Accelerate
-      # on macOS), OpenCL, and the IPP/KleidiCV/Carotene accelerators, which
-      # each add another static library.
+      # on macOS), OpenCL, the IPP/KleidiCV/Carotene accelerators, and the image
+      # codec, flatbuffers and protobuf third-party libraries (for modules not
+      # built here). zlib comes from the system headers; MediaPipe links its own.
       - if: runner.os != 'Windows' && steps.opencv-cache.outputs.cache-hit != 'true'
         name: Build OpenCV (source, static)
         run: |
@@ -197,6 +199,9 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF -DBUILD_LIST=core,imgproc \
             -DWITH_LAPACK=OFF -DWITH_OPENCL=OFF -DWITH_EIGEN=OFF -DWITH_OPENMP=OFF -DWITH_TBB=OFF \
             -DWITH_IPP=OFF -DWITH_ITT=OFF -DWITH_KLEIDICV=OFF -DWITH_CAROTENE=OFF \
+            -DWITH_JPEG=OFF -DWITH_PNG=OFF -DWITH_TIFF=OFF -DWITH_WEBP=OFF -DWITH_OPENJPEG=OFF \
+            -DWITH_JASPER=OFF -DWITH_OPENEXR=OFF -DWITH_AVIF=OFF -DWITH_SPNG=OFF \
+            -DWITH_FLATBUFFERS=OFF -DWITH_PROTOBUF=OFF -DBUILD_ZLIB=OFF \
             -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_apps=OFF \
             -DBUILD_JAVA=OFF -DBUILD_opencv_python3=OFF -DOPENCV_GENERATE_PKGCONFIG=OFF
           cmake --build opencv-build -j "$(getconf _NPROCESSORS_ONLN)"
@@ -206,15 +211,12 @@ jobs:
         name: OpenCV (use static build)
         run: |
           set -euo pipefail
+          # Only these two are linked; anything else OpenCV installed is listed
+          # but unused (the libmediapipe dependency check below is what counts).
           find opencv-install/lib -name '*.a' | sort
-          # Must be exactly core and imgproc; anything else means an option above
-          # let a third-party library in.
-          extra="$(find opencv-install/lib -name '*.a' ! -name libopencv_core.a ! -name libopencv_imgproc.a)"
-          if [ -n "$extra" ]; then
-            echo "::error::Unexpected static libraries in the OpenCV build:"
-            echo "$extra"
-            exit 1
-          fi
+          for a in libopencv_core.a libopencv_imgproc.a; do
+            [ -f "opencv-install/lib/$a" ] || { echo "::error::opencv-install/lib/$a is missing"; exit 1; }
+          done
           # imgproc before core: GNU ld resolves static libraries in order.
           build='cc_library(
               name = "opencv",
