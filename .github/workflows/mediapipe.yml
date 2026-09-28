@@ -345,8 +345,11 @@ jobs:
           bazel --output_user_root=C:/_bzl build @flags //mediapipe/tasks/c:libmediapipe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE/out" | Out-Null
-          # Bazel copies the OpenCV DLL next to the library, as setup.py expects.
-          Copy-Item bazel-bin/mediapipe/tasks/c/${{ matrix.lib }}, bazel-bin/mediapipe/tasks/c/*opencv*.dll "$env:GITHUB_WORKSPACE/out/"
+          Copy-Item bazel-bin/mediapipe/tasks/c/${{ matrix.lib }} "$env:GITHUB_WORKSPACE/out/"
+          # libmediapipe.dll imports opencv_world<version>.dll (not the debug "d" build).
+          $opencvDll = Get-ChildItem C:/opencv/build/x64/vc*/bin/opencv_world*.dll | Where-Object { $_.Name -notmatch 'd\.dll$' }
+          if (@($opencvDll).Count -ne 1) { throw "Expected one release opencv_world DLL, found: $opencvDll" }
+          Copy-Item $opencvDll "$env:GITHUB_WORKSPACE/out/"
 
       - if: runner.os == 'macOS'
         name: Build
