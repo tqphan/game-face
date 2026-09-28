@@ -267,7 +267,9 @@ jobs:
               constraint_values = [
                   "@platforms//cpu:x86_64",
                   "@platforms//os:windows",
-                  "@bazel_tools//tools/cpp:clang-cl",
+                  # rules_cc's constraint, which its clang-cl toolchain requires;
+                  # @bazel_tools//tools/cpp:clang-cl is a different one.
+                  "@rules_cc//cc/private/toolchain:clang-cl",
               ],
           )
           EOF
@@ -325,19 +327,20 @@ jobs:
             "--action_env=PYTHON_BIN_PATH=$py"
           )
 
-          # Diagnostics: which C++ toolchain Bazel picks for a C target, and
-          # how the clang-cl toolchains are declared.
-          Write-Output '::group::C++ toolchain resolution'
-          foreach ($repo in 'rules_cc~~cc_configure_extension~local_config_cc', 'bazel_tools~cc_configure_extension~local_config_cc') {
-            Write-Output "--- @@$repo clang-cl toolchain"
-            bazel --output_user_root=C:/_bzl query --output=build "@@${repo}//:cc-toolchain-x64_windows-clang-cl" 2>&1 | ForEach-Object { "$_" }
-          }
-          Write-Output '--- resolution for @pthreadpool//:pthreadpool'
-          bazel --output_user_root=C:/_bzl cquery @flags `
+          # Fail fast unless Bazel resolves the clang-cl toolchain (it silently
+          # falls back to MSVC's when the platform doesn't match).
+          $resolution = bazel --output_user_root=C:/_bzl cquery @flags `
             '--toolchain_resolution_debug=@bazel_tools//tools/cpp:toolchain_type' `
-            '@pthreadpool//:pthreadpool' 2>&1 |
-            ForEach-Object { "$_" } | Select-String -Pattern 'ToolchainResolution|ERROR' | Select-Object -First 80
-          Write-Output '::endgroup::'
+            '@pthreadpool//:pthreadpool' 2>&1 | ForEach-Object { "$_" -replace '\x1b\[[0-9;]*m', '' }
+          $selected = ($resolution -join ' ') -replace '\s+', ' ' |
+            Select-String -Pattern 'type @@bazel_tools//tools/cpp:toolchain_type -> toolchain (\S+)' -AllMatches
+          $toolchains = $selected.Matches | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+          "C++ toolchain: $toolchains"
+          if (-not $toolchains -or ($toolchains | Where-Object { $_ -notmatch 'clang-cl' })) {
+            $resolution | Select-String 'ToolchainResolution' | Select-Object -First 60
+            Write-Output '::error::Bazel did not select the clang-cl toolchain.'
+            exit 1
+          }
 
           bazel --output_user_root=C:/_bzl build @flags //mediapipe/tasks/c:libmediapipe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
