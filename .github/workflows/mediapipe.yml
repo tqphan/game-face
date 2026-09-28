@@ -299,8 +299,10 @@ jobs:
       # keeps paths under Windows' length limit. rules_swift (there for Apple
       # builds) autoconfigures a Windows toolchain that requires swiftc.exe;
       # nothing here uses Swift, so an empty repository stands in for it.
-      # The two clang-cl flags select the toolchain from the step above
-      # (rules_cc's cc_configure repository, by its canonical name).
+      # The clang-cl flags select the toolchain from the step above (rules_cc's
+      # cc_configure repository, by its canonical name) and, via --host_platform,
+      # for the tools Bazel builds too; otherwise those fall back to cl.exe.
+      # Same set as TensorFlow's win_clang config.
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -317,6 +319,7 @@ jobs:
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
             --extra_toolchains=@@rules_cc~~cc_configure_extension~local_config_cc//:cc-toolchain-x64_windows-clang-cl `
             --extra_execution_platforms=//clang_cl:x64_windows-clang-cl `
+            --host_platform=//clang_cl:x64_windows-clang-cl --compiler=clang-cl `
             --define=MEDIAPIPE_DISABLE_GPU=1 `
             "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
