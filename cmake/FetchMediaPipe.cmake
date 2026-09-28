@@ -13,10 +13,18 @@
 # Offline builds: set GAME_FACE_MEDIAPIPE_ZIP to a local copy of the zip (its
 # hash is still checked).
 #
-# To update: push a commit with "[mediapipe release]" in its message, then set
-# MEDIAPIPE_RELEASE and the hashes below from that release's SHA256SUMS. When
-# MEDIAPIPE_VERSION changes, re-check third_party/mediapipe_c/mediapipe_c_api.h
-# against that MediaPipe tag's mediapipe/tasks/c headers.
+# Updating MediaPipe (or rebuilding the same version):
+#   1. In .github/workflows/mediapipe.yml, set MEDIAPIPE_REF (the default of
+#      env.MEDIAPIPE_REF) to the MediaPipe tag, and set MEDIAPIPE_VERSION below
+#      to the same tag; the zip names contain it.
+#   2. Push a commit with "[mediapipe release]" in its message. The workflow
+#      builds every platform and, if all pass their checks, publishes a GitHub
+#      Release tagged mediapipe-<tag>-<short commit>.
+#   3. Set MEDIAPIPE_RELEASE below to that release's tag and each _mp_sha256 to
+#      the matching line of its SHA256SUMS.
+#   4. If the version changed, re-check third_party/mediapipe_c/mediapipe_c_api.h
+#      against that tag's mediapipe/tasks/c headers (struct layouts and function
+#      signatures), then test tracking with the new library.
 
 set(MEDIAPIPE_VERSION v1.0.0)
 set(MEDIAPIPE_RELEASE mediapipe-v1.0.0-ec499d2)
