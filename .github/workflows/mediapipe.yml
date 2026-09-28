@@ -214,7 +214,8 @@ jobs:
       # VS 2022's <stdatomic.h> (used by pthreadpool) needs C11 plus
       # /experimental:c11atomics, and Bazel sets no C standard. Protobuf
       # refuses MSVC under Bazel without its opt-in define (support ends in
-      # protobuf 34).
+      # protobuf 34). MediaPipe's status macros use __VA_OPT__, which needs
+      # the conforming preprocessor.
       - if: runner.os == 'Windows'
         name: Build
         working-directory: mediapipe
@@ -231,6 +232,7 @@ jobs:
             --copt=-DNDEBUG --copt=-DLITERT_DISABLE_NPU `
             --conlyopt=/std:c11 --host_conlyopt=/std:c11 `
             --conlyopt=/experimental:c11atomics --host_conlyopt=/experimental:c11atomics `
+            --copt=/Zc:preprocessor --host_copt=/Zc:preprocessor `
             --define=MEDIAPIPE_DISABLE_GPU=1 --define=protobuf_allow_msvc=true `
             "--override_repository=rules_swift~~non_module_deps~build_bazel_rules_swift_local_config=$swiftStub" `
             "--action_env=PYTHON_BIN_PATH=$py" `
