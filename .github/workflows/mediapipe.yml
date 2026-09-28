@@ -29,6 +29,9 @@ on:
       ref:
         description: MediaPipe tag or commit (no public tag exists for 1.0.1)
         default: v1.0.0
+      platforms:
+        description: Platforms to build (comma-separated linux, windows, macos)
+        default: linux,windows,macos
 
 permissions:
   contents: read
@@ -40,7 +43,46 @@ env:
   OPENCV_WINDOWS_SHA256: 5f266a8b73bed535962d7e861a6457e32a0dd5f463ad0a7cf8707a135469be63
 
 jobs:
+  # Picks the platforms: the "platforms" input on a manual run, or a
+  # "[mediapipe: windows,macos]" tag in the pushed commit's message; all of
+  # them otherwise.
+  platforms:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        env:
+          INPUT: ${{ inputs.platforms }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          python3 - <<'EOF'
+          import json, os, re
+          all_platforms = [
+              {"key": "linux", "name": "Linux x86_64", "os": "ubuntu-24.04",
+               "lib": "libmediapipe.so", "artifact": "libmediapipe-linux-x86_64"},
+              # VS 2022; windows-latest's VS 2026 compiler is newer than MediaPipe v1.0.0.
+              {"key": "windows", "name": "Windows x86_64", "os": "windows-2022",
+               "lib": "libmediapipe.dll", "artifact": "libmediapipe-windows-x86_64"},
+              {"key": "macos", "name": "macOS arm64", "os": "macos-15",
+               "lib": "libmediapipe.dylib", "artifact": "libmediapipe-macos-arm64"},
+          ]
+          wanted = os.environ["INPUT"]
+          if not wanted:
+              tag = re.search(r"\[mediapipe:\s*([^\]]*)\]", os.environ["MESSAGE"])
+              wanted = tag.group(1) if tag else "linux,windows,macos"
+          keys = {k.strip().lower() for k in wanted.split(",") if k.strip()}
+          unknown = keys - {p["key"] for p in all_platforms}
+          if unknown or not keys:
+              raise SystemExit(f"unknown or empty platforms: {sorted(unknown) or wanted!r}")
+          include = [p for p in all_platforms if p["key"] in keys]
+          print("Building:", ", ".join(p["name"] for p in include))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("matrix=" + json.dumps({"include": include}) + "\n")
+          EOF
+
   build:
+    needs: platforms
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 360
@@ -54,21 +96,7 @@ jobs:
         shell: bash
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - name: Linux x86_64
-            os: ubuntu-24.04
-            lib: libmediapipe.so
-            artifact: libmediapipe-linux-x86_64
-          # VS 2022; windows-latest's VS 2026 compiler is newer than MediaPipe v1.0.0.
-          - name: Windows x86_64
-            os: windows-2022
-            lib: libmediapipe.dll
-            artifact: libmediapipe-windows-x86_64
-          - name: macOS arm64
-            os: macos-15
-            lib: libmediapipe.dylib
-            artifact: libmediapipe-macos-arm64
+      matrix: ${{ fromJSON(needs.platforms.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
         with:
