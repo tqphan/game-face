@@ -1,7 +1,7 @@
 # Downloads libmediapipe (the Tasks C API library) for the target platform from
-# this repository's GitHub Release, checks the zip's SHA-256, and extracts it.
-# The release is built by .github/workflows/mediapipe.yml from MediaPipe's
-# open-source tree, without the usage logger in PyPI's mediapipe wheels.
+# a GitHub Release of github.com/tqphan/libmediapipe, checks the zip's SHA-256,
+# and extracts it. That repo builds it from MediaPipe's open-source tree,
+# without the usage logger in PyPI's mediapipe wheels.
 #
 # Sets:
 #   MEDIAPIPE_LIBRARY        full path to libmediapipe.{dll,so,dylib}
@@ -14,12 +14,13 @@
 # hash is still checked).
 #
 # Updating MediaPipe (or rebuilding the same version):
-#   1. In .github/workflows/mediapipe.yml, set MEDIAPIPE_REF (the default of
-#      env.MEDIAPIPE_REF) to the MediaPipe tag, and set MEDIAPIPE_VERSION below
-#      to the same tag; the zip names contain it.
-#   2. Push a commit with "[mediapipe release]" in its message. The workflow
-#      builds every platform and, if all pass their checks, publishes a GitHub
-#      Release tagged mediapipe-<tag>-<short commit>.
+#   1. In tqphan/libmediapipe's .github/workflows/build.yml, set MEDIAPIPE_REF
+#      (the default of env.MEDIAPIPE_REF) to the MediaPipe tag, and set
+#      MEDIAPIPE_VERSION below to the same tag; the zip names contain it.
+#   2. Push that change to libmediapipe with "[mediapipe release]" in the commit
+#      message (or run its Build workflow with "release" checked). It builds
+#      every platform and, if all pass their checks, publishes a Release tagged
+#      mediapipe-<tag>-<short commit>.
 #   3. Set MEDIAPIPE_RELEASE below to that release's tag and each _mp_sha256 to
 #      the matching line of its SHA256SUMS.
 #   4. If the version changed, re-check third_party/mediapipe_c/mediapipe_c_api.h
@@ -27,15 +28,15 @@
 #      signatures), then test tracking with the new library.
 
 set(MEDIAPIPE_VERSION v1.0.0)
-set(MEDIAPIPE_RELEASE mediapipe-v1.0.0-ec499d2)
-set(_mp_base https://github.com/tqphan/game-face/releases/download/${MEDIAPIPE_RELEASE})
+set(MEDIAPIPE_RELEASE mediapipe-v1.0.0-cb4c817)
+set(_mp_base https://github.com/tqphan/libmediapipe/releases/download/${MEDIAPIPE_RELEASE})
 
 if(WIN32)
     if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|x86_64)$")
         message(FATAL_ERROR "libmediapipe is built for x86_64 Windows only, not ${CMAKE_SYSTEM_PROCESSOR}.")
     endif()
     set(_mp_platform windows-x86_64)
-    set(_mp_sha256 e8177466c2139f7d5b62226fd9f33025668405f0e880611d91e15475e30aefcf)
+    set(_mp_sha256 b85d8d40ef10281ad9c9c6f420c56cdb96b4f96f58cd6f1bb995688cd0efb4b3)
     set(_mp_lib libmediapipe.dll)
 elseif(APPLE)
     if(CMAKE_OSX_ARCHITECTURES AND NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
@@ -45,12 +46,12 @@ elseif(APPLE)
         message(FATAL_ERROR "libmediapipe is built for arm64 macOS only (Apple silicon), not ${CMAKE_SYSTEM_PROCESSOR}.")
     endif()
     set(_mp_platform macos-arm64)
-    set(_mp_sha256 8aee7aacf4ff6ec2a7424254fee4de4109f2e128fee1724248a495aa4abe98fc)
+    set(_mp_sha256 028f27c2794c631e00fc3e50c33d0ce035da5ec36522f50c6ea28a4590c92427)
     set(_mp_lib libmediapipe.dylib)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
     # Built on Ubuntu 24.04, so it needs glibc 2.39 or newer.
     set(_mp_platform linux-x86_64)
-    set(_mp_sha256 13e2a730dcbaf94f00db27277b0d6c28ac231a6e99bcc7140ef671c69a4666d0)
+    set(_mp_sha256 6dad74544ce6c39d502fca75a9f2b73f774a4ddd46d068df785724ae32b49cf6)
     set(_mp_lib libmediapipe.so)
 else()
     message(FATAL_ERROR "libmediapipe is built for Windows x86_64, Linux x86_64 and macOS arm64 only, "
