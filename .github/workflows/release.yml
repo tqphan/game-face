@@ -1,8 +1,10 @@
 name: Release
 
 # Release builds only. Every build here is signed with the project's self-signed
-# certificate, and the Windows exe carries the uiAccess manifest. Development
-# builds never go through this workflow.
+# certificate ("game-face self-signed", a password-protected PFX), and the Windows
+# exe carries the uiAccess manifest. On Windows the exe, the Inno Setup installer
+# and its uninstaller are all signed. Development builds never go through this
+# workflow.
 #
 # Requires repository secrets (see packaging/signing/README.md):
 #   SIGNING_CERT_PFX_BASE64, SIGNING_CERT_PASSWORD
@@ -22,6 +24,7 @@ env:
   BUILD_TYPE: Release
   QT_VERSION: '6.10.1'
   TIMESTAMP_URL: http://timestamp.digicert.com
+  CERT_NAME: game-face self-signed
 
 jobs:
   windows:
@@ -29,7 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check signing secrets
+      # Opens the PFX with its password up front, so a wrong secret or the wrong
+      # certificate fails the job before the build.
+      - name: Load signing certificate
         shell: pwsh
         env:
           PFX_BASE64: ${{ secrets.SIGNING_CERT_PFX_BASE64 }}
@@ -38,6 +43,19 @@ jobs:
           if (-not $env:PFX_BASE64 -or -not $env:PFX_PASSWORD) {
             throw 'SIGNING_CERT_PFX_BASE64 and SIGNING_CERT_PASSWORD are required for release builds.'
           }
+          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
+          $cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new($pfx, $env:PFX_PASSWORD)
+          $name = $cert.GetNameInfo('SimpleName', $false)
+          if ($name -ne $env:CERT_NAME) {
+            throw "The signing certificate is '$name', expected '$env:CERT_NAME' (scripts/signing/create-signing-cert.sh)."
+          }
+          if (-not $cert.HasPrivateKey) { throw 'The PFX has no private key.' }
+          [IO.File]::WriteAllBytes('game-face-codesign.cer', $cert.Export('Cert'))
+          # Trusted on this throwaway runner only, so `signtool verify` can check the chain.
+          Import-Certificate -FilePath game-face-codesign.cer -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+          "SIGNING_PFX=$pfx" >> $env:GITHUB_ENV
+          "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
 
       - uses: lukka/get-cmake@latest
       - uses: ilammy/msvc-dev-cmd@v1
@@ -72,37 +90,54 @@ jobs:
             throw 'Release manifest must set uiAccess="true" (see cmake/WindowsUiAccess.cmake).'
           }
 
-      - name: Sign
+      - name: Sign executable
         shell: pwsh
         env:
-          PFX_BASE64: ${{ secrets.SIGNING_CERT_PFX_BASE64 }}
-          PFX_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+          SIGNING_PFX_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
         run: |
-          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
-          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
-          try {
-            $cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new($pfx, $env:PFX_PASSWORD)
-            [IO.File]::WriteAllBytes('game-face-codesign.cer', $cert.Export('Cert'))
-            # Trusted on this throwaway runner only, so `signtool verify` can check the chain.
-            Import-Certificate -FilePath game-face-codesign.cer -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+          packaging\windows\sign.ps1 dist\bin\game-face.exe
+          signtool verify /pa /v dist\bin\game-face.exe
+          if ($LASTEXITCODE) { throw 'signtool verify failed.' }
 
-            signtool sign /f $pfx /p $env:PFX_PASSWORD /fd SHA256 /tr $env:TIMESTAMP_URL /td SHA256 /d game-face dist\bin\game-face.exe
-            if ($LASTEXITCODE) { throw 'signtool sign failed.' }
-            signtool verify /pa /v dist\bin\game-face.exe
-            if ($LASTEXITCODE) { throw 'signtool verify failed.' }
-          } finally {
-            Remove-Item $pfx -Force -ErrorAction SilentlyContinue
+      # No zip: a uiAccess exe only starts from Program Files, so the installer is
+      # the one supported way to install on Windows.
+      - name: Build and sign installer
+        shell: pwsh
+        env:
+          SIGNING_PFX_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          $version = (Select-String -Path build\CMakeCache.txt -Pattern '^CMAKE_PROJECT_VERSION:STATIC=(.+)$').Matches[0].Groups[1].Value
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME doesn't match the project version $version in CMakeLists.txt."
           }
 
-      - name: Package
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE) { throw 'Could not install Inno Setup.' }
+          }
+
+          $ws = $env:GITHUB_WORKSPACE
+          $sign = Join-Path $ws 'packaging\windows\sign.ps1'
+          & $iscc /Qp "/DAppVersion=$version" "/DDistDir=$ws\dist" "/DOutputDir=$ws" `
+            "/DCertFile=$ws\game-face-codesign.cer" "/DCertThumbprint=$env:CERT_THUMBPRINT" `
+            /DSign "/Sgfsign=pwsh -NoProfile -File `$q$sign`$q `$f" `
+            packaging\windows\game-face.iss
+          if ($LASTEXITCODE) { throw 'ISCC failed.' }
+
+          signtool verify /pa /v game-face-windows-setup.exe
+          if ($LASTEXITCODE) { throw 'signtool verify failed on the installer.' }
+
+      - name: Remove signing certificate
+        if: always()
         shell: pwsh
-        run: Compress-Archive -Path dist\* -DestinationPath game-face-windows.zip
+        run: Remove-Item (Join-Path $env:RUNNER_TEMP 'signing.pfx') -Force -ErrorAction SilentlyContinue
 
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
-            game-face-windows.zip
+            game-face-windows-setup.exe
             game-face-codesign.cer
 
   macos:
@@ -259,7 +294,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/game-face-windows.zip
+            artifacts/game-face-windows-setup.exe
             artifacts/game-face-macos.zip
             artifacts/game-face-linux.tar.gz
             artifacts/game-face-codesign.cer

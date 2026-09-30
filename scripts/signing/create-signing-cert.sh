@@ -14,7 +14,7 @@
 set -euo pipefail
 
 out="${1:-signing-cert}"
-cn="${CERT_CN:-game-face Code Signing (self-signed)}"
+cn="${CERT_CN:-game-face self-signed}"
 days="${CERT_DAYS:-1095}"
 
 # Stop Git Bash (MSYS) from rewriting "/CN=..." into a Windows path.
