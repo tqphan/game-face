@@ -54,6 +54,8 @@ public:
     void stop();
     void setProfile(const game_face::Profile& profile, bool keep_state);
     void setInjectionEnabled(bool enabled);
+    // Releases held input and re-arms the bindings; for when frames stop.
+    void pause();
     // `image` is RGB888. Frames are converted on the GUI thread: calling
     // QVideoFrame::toImage() here would create a thread-local Direct3D device
     // that deadlocks when this thread exits (Windows loader lock).

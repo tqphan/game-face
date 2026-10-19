@@ -16,6 +16,11 @@ namespace {
 
 constexpr int kAutoSaveDelayMs = 1000;
 constexpr int kMaxTrackingWidth = 640;
+// Long enough for a camera to start; a driver reset stalls it for longer.
+constexpr int kCameraStallMs = 5000;
+// Camera retries back off from the first delay to the last.
+constexpr int kFirstRetryMs = 1000;
+constexpr int kMaxRetryMs = 30000;
 
 #if defined(Q_OS_WIN)
 constexpr auto kMediaPipeLibrary = "libmediapipe.dll";
@@ -74,6 +79,13 @@ AppController::AppController(QObject* parent)
     saveProfilesTimer_.setSingleShot(true);
     saveProfilesTimer_.setInterval(kAutoSaveDelayMs);
     connect(&saveProfilesTimer_, &QTimer::timeout, this, &AppController::saveProfiles);
+
+    stallTimer_.setSingleShot(true);
+    stallTimer_.setInterval(kCameraStallMs);
+    connect(&stallTimer_, &QTimer::timeout, this,
+            [this] { cameraFailed(tr("The camera stopped sending video.")); });
+    retryTimer_.setSingleShot(true);
+    connect(&retryTimer_, &QTimer::timeout, this, &AppController::retryCamera);
 }
 
 AppController::~AppController()
@@ -220,16 +232,12 @@ void AppController::startTracking()
     }
     sendProfileToWorker(false);
 
-    camera_ = std::make_unique<QCamera>(device);
-    connect(camera_.get(), &QCamera::errorOccurred, this, [this](QCamera::Error, const QString& message) {
-        setStatus(tr("Camera error: %1").arg(message));
-        stopTracking();
-    });
-    session_.setCamera(camera_.get());
-    camera_->start();
-
+    // Set first: opening the camera can report an error, which needs tracking on.
     tracking_ = true;
+    cameraId_ = device.id();
+    retryDelayMs_ = kFirstRetryMs;
     setStatus({});
+    openCamera(device);
     emit trackingChanged();
 }
 
@@ -238,6 +246,35 @@ void AppController::stopTracking()
     if (!tracking_)
         return;
     tracking_ = false;
+    retryTimer_.stop();
+    if (recovering_) {
+        recovering_ = false;
+        setStatus({});
+    }
+    closeCamera();
+    onWorker([w = worker_] { w->stop(); });
+    clearLiveState();
+    emit trackingChanged();
+}
+
+void AppController::openCamera(const QCameraDevice& device)
+{
+    camera_ = std::make_unique<QCamera>(device);
+    // Queued: cameraFailed deletes the camera, which must not happen while it
+    // is emitting. The check skips errors from a camera already replaced.
+    connect(camera_.get(), &QCamera::errorOccurred, this,
+            [this, camera = camera_.get()](QCamera::Error, const QString& message) {
+                if (camera_.get() == camera)
+                    cameraFailed(tr("Camera error: %1").arg(message));
+            }, Qt::QueuedConnection);
+    session_.setCamera(camera_.get());
+    camera_->start();
+    stallTimer_.start();
+}
+
+void AppController::closeCamera()
+{
+    stallTimer_.stop();
     if (camera_)
         camera_->stop();
     session_.setCamera(nullptr);
@@ -245,20 +282,60 @@ void AppController::stopTracking()
     // The video output keeps showing its last frame; replace it with nothing.
     if (QVideoSink* sink = session_.videoSink())
         sink->setVideoFrame(QVideoFrame());
-    onWorker([w = worker_] { w->stop(); });
+}
 
+void AppController::cameraFailed(const QString& reason)
+{
+    if (!tracking_)
+        return;
+    closeCamera();
+    if (!recovering_) {
+        // No frames means no stop triggers; don't leave keys held meanwhile.
+        recovering_ = true;
+        onWorker([w = worker_] { w->pause(); });
+        clearLiveState();
+    }
+    setStatus(tr("%1 Trying again in %n second(s).", nullptr, retryDelayMs_ / 1000).arg(reason));
+    retryTimer_.start(retryDelayMs_);
+    retryDelayMs_ = std::min(retryDelayMs_ * 2, kMaxRetryMs);
+}
+
+void AppController::retryCamera()
+{
+    if (!tracking_ || camera_)
+        return;
+    for (const QCameraDevice& device : QMediaDevices::videoInputs()) {
+        if (device.id() == cameraId_) {
+            // Recovered once it sends a frame; see onVideoFrame.
+            openCamera(device);
+            return;
+        }
+    }
+    cameraFailed(tr("The camera is not connected."));
+}
+
+void AppController::clearLiveState()
+{
     landmarks_.clear();
     setFaceFound(false);
     bindingModel_->clearLiveState();
     blendshapeModel_->setScores({});
     emit landmarksChanged();
-    emit trackingChanged();
 }
 
 void AppController::onVideoFrame(const QVideoFrame& frame)
 {
+    if (!tracking_ || !frame.isValid())
+        return;
+    stallTimer_.start();
+    if (recovering_) {
+        recovering_ = false;
+        retryDelayMs_ = kFirstRetryMs;
+        setStatus({});
+    }
+
     // One frame in flight: frames arriving while the worker is busy are dropped.
-    if (!tracking_ || workerBusy_ || !frame.isValid())
+    if (workerBusy_)
         return;
 
     // Converted here, not on the worker; see TrackingWorker::process.
@@ -278,7 +355,8 @@ void AppController::onVideoFrame(const QVideoFrame& frame)
 void AppController::onFrameResult(FrameResult result)
 {
     workerBusy_ = false;
-    if (!tracking_)
+    // A frame from before the camera failed is stale.
+    if (!tracking_ || recovering_)
         return;
     setFaceFound(result.face_found);
     if (result.face_found) {
@@ -303,17 +381,19 @@ void AppController::onSettingsChanged()
 void AppController::onCamerasChanged()
 {
     emit camerasChanged();
-    if (!tracking_ || !camera_)
+    if (!tracking_)
         return;
-    const QByteArray active = camera_->cameraDevice().id();
-    for (const QCameraDevice& device : QMediaDevices::videoInputs()) {
-        if (device.id() == active)
-            return;
+    const auto devices = QMediaDevices::videoInputs();
+    const bool present = std::any_of(devices.begin(), devices.end(),
+                                     [this](const QCameraDevice& d) { return d.id() == cameraId_; });
+    if (!present && camera_) {
+        // A driver reset can remove the camera for a moment; wait for it.
+        cameraFailed(tr("The camera was disconnected."));
+    } else if (present && !camera_) {
+        // It's back: don't wait out the backoff.
+        retryTimer_.stop();
+        retryCamera();
     }
-    // Stop rather than silently switching to another camera, which could be
-    // an infrared sensor.
-    stopTracking();
-    setStatus(tr("The camera was disconnected; tracking stopped."));
 }
 
 void AppController::sendProfileToWorker(bool keep_state)

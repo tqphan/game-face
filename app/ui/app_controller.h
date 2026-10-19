@@ -100,6 +100,12 @@ private:
     void onFrameResult(FrameResult result);
     void onSettingsChanged();
     void onCamerasChanged();
+    void openCamera(const QCameraDevice& device);
+    void closeCamera();
+    // Closes the camera and schedules another try; tracking stays on.
+    void cameraFailed(const QString& reason);
+    void retryCamera();
+    void clearLiveState();
     void profileStructureChanged();
     void sendProfileToWorker(bool keep_state);
     void sendInjectionState();
@@ -123,6 +129,15 @@ private:
     QMediaDevices mediaDevices_;
     QMediaCaptureSession session_;
     std::unique_ptr<QCamera> camera_;
+    // While tracking, the camera to use. Recovery reopens only this one, never
+    // another camera, which could be an infrared sensor.
+    QByteArray cameraId_;
+    // Restarted by every frame; fires when the camera stops sending them.
+    QTimer stallTimer_;
+    QTimer retryTimer_;
+    int retryDelayMs_ = 0;
+    // The camera failed and has not sent a frame since.
+    bool recovering_ = false;
     QPointer<QObject> videoOutput_;
     QMetaObject::Connection frameConnection_;
 

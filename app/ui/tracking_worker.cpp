@@ -71,6 +71,12 @@ void TrackingWorker::setInjectionEnabled(bool enabled)
     }
 }
 
+void TrackingWorker::pause()
+{
+    releaseAll();
+    engine_.reset();
+}
+
 void TrackingWorker::process(const QImage& image)
 {
     FrameResult result;
