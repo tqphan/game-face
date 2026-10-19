@@ -73,22 +73,88 @@ ApplicationWindow {
         }
     }
 
+    // One face mesh group: a show/hide checkbox and a colour swatch that opens
+    // a colour dialog.
+    component MeshRow: RowLayout {
+        id: row
+        property string label
+        property string meshColor
+        property bool shown
+        signal colorPicked(string color)
+        signal shownToggled(bool shown)
+        Layout.fillWidth: true
+        CheckBox {
+            Layout.fillWidth: true
+            text: row.label
+            checked: row.shown
+            onToggled: row.shownToggled(checked)
+        }
+        // Checkerboard under the colour, so transparency is visible.
+        Rectangle {
+            implicitWidth: 56
+            implicitHeight: 28
+            radius: 4
+            color: "#cccccc"
+            border.color: Material.dividerColor
+            Grid {
+                anchors.fill: parent
+                anchors.margins: 1
+                columns: 8
+                clip: true
+                Repeater {
+                    model: 32
+                    Rectangle {
+                        required property int index
+                        width: 7
+                        height: 7
+                        color: (index + Math.floor(index / 8)) % 2 ? "#ffffff" : "#cccccc"
+                    }
+                }
+            }
+            Rectangle {
+                anchors.fill: parent
+                radius: 4
+                color: row.meshColor
+                border.color: Material.dividerColor
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    colorDialog.selectedColor = row.meshColor
+                    colorDialog.open()
+                }
+            }
+        }
+        ColorDialog {
+            id: colorDialog
+            title: qsTr("%1 colour").arg(row.label)
+            options: ColorDialog.ShowAlphaChannel
+            onAccepted: row.colorPicked(selectedColor.toString())
+        }
+    }
+
     component LabeledSlider: ColumnLayout {
         id: labeled
         property string label
         property real value
+        property real from: 0
+        property real to: 1
+        property real stepSize: 0.01
+        property int decimals: 2
+        property string unit
         signal moved(real value)
         Layout.fillWidth: true
         spacing: 0
         Label {
-            text: labeled.label + ": " + labeled.value.toFixed(2)
+            text: labeled.label + ": " + labeled.value.toFixed(labeled.decimals) + labeled.unit
             opacity: 0.8
         }
         Slider {
             Layout.fillWidth: true
-            from: 0
-            to: 1
-            stepSize: 0.01
+            from: labeled.from
+            to: labeled.to
+            stepSize: labeled.stepSize
             value: labeled.value
             onMoved: labeled.moved(value)
         }
@@ -211,6 +277,76 @@ ApplicationWindow {
                 label: qsTr("Sound volume")
                 value: dialog.settings.soundVolume
                 onMoved: (v) => dialog.settings.soundVolume = v
+            }
+
+            MenuSeparator { Layout.fillWidth: true }
+
+            Label { text: qsTr("Face mesh"); font.bold: true }
+            MeshRow {
+                label: qsTr("Mesh (tessellation)")
+                meshColor: dialog.settings.meshTessellationColor
+                shown: dialog.settings.meshTessellationVisible
+                onColorPicked: (c) => dialog.settings.meshTessellationColor = c
+                onShownToggled: (v) => dialog.settings.meshTessellationVisible = v
+            }
+            MeshRow {
+                label: qsTr("Face oval")
+                meshColor: dialog.settings.meshFaceOvalColor
+                shown: dialog.settings.meshFaceOvalVisible
+                onColorPicked: (c) => dialog.settings.meshFaceOvalColor = c
+                onShownToggled: (v) => dialog.settings.meshFaceOvalVisible = v
+            }
+            MeshRow {
+                label: qsTr("Lips")
+                meshColor: dialog.settings.meshLipsColor
+                shown: dialog.settings.meshLipsVisible
+                onColorPicked: (c) => dialog.settings.meshLipsColor = c
+                onShownToggled: (v) => dialog.settings.meshLipsVisible = v
+            }
+            MeshRow {
+                label: qsTr("Eyes")
+                meshColor: dialog.settings.meshEyesColor
+                shown: dialog.settings.meshEyesVisible
+                onColorPicked: (c) => dialog.settings.meshEyesColor = c
+                onShownToggled: (v) => dialog.settings.meshEyesVisible = v
+            }
+            MeshRow {
+                label: qsTr("Eyebrows")
+                meshColor: dialog.settings.meshEyebrowsColor
+                shown: dialog.settings.meshEyebrowsVisible
+                onColorPicked: (c) => dialog.settings.meshEyebrowsColor = c
+                onShownToggled: (v) => dialog.settings.meshEyebrowsVisible = v
+            }
+            MeshRow {
+                label: qsTr("Irises")
+                meshColor: dialog.settings.meshIrisesColor
+                shown: dialog.settings.meshIrisesVisible
+                onColorPicked: (c) => dialog.settings.meshIrisesColor = c
+                onShownToggled: (v) => dialog.settings.meshIrisesVisible = v
+            }
+            LabeledSlider {
+                label: qsTr("Contour width")
+                from: 1
+                to: 6
+                stepSize: 0.5
+                decimals: 1
+                unit: " px"
+                value: dialog.settings.meshContourWidth
+                onMoved: (v) => dialog.settings.meshContourWidth = v
+            }
+            LabeledSlider {
+                label: qsTr("Mesh width")
+                from: 0.5
+                to: 3
+                stepSize: 0.25
+                decimals: 2
+                unit: " px"
+                value: dialog.settings.meshTessellationWidth
+                onMoved: (v) => dialog.settings.meshTessellationWidth = v
+            }
+            AppButton {
+                text: qsTr("Reset face mesh style")
+                onClicked: dialog.settings.resetMeshStyle()
             }
 
             MenuSeparator { Layout.fillWidth: true }

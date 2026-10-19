@@ -30,12 +30,29 @@ class SettingsObject : public QObject {
     Q_PROPERTY(QString startSound MEMBER startSound NOTIFY changed)
     Q_PROPERTY(QString stopSound MEMBER stopSound NOTIFY changed)
     Q_PROPERTY(double soundVolume MEMBER soundVolume NOTIFY changed)
+    // Face mesh: a "#rrggbb"/"#aarrggbb" colour and a visible flag per group.
+    Q_PROPERTY(QString meshTessellationColor MEMBER meshTessellationColor NOTIFY changed)
+    Q_PROPERTY(bool meshTessellationVisible MEMBER meshTessellationVisible NOTIFY changed)
+    Q_PROPERTY(QString meshFaceOvalColor MEMBER meshFaceOvalColor NOTIFY changed)
+    Q_PROPERTY(bool meshFaceOvalVisible MEMBER meshFaceOvalVisible NOTIFY changed)
+    Q_PROPERTY(QString meshLipsColor MEMBER meshLipsColor NOTIFY changed)
+    Q_PROPERTY(bool meshLipsVisible MEMBER meshLipsVisible NOTIFY changed)
+    Q_PROPERTY(QString meshEyesColor MEMBER meshEyesColor NOTIFY changed)
+    Q_PROPERTY(bool meshEyesVisible MEMBER meshEyesVisible NOTIFY changed)
+    Q_PROPERTY(QString meshEyebrowsColor MEMBER meshEyebrowsColor NOTIFY changed)
+    Q_PROPERTY(bool meshEyebrowsVisible MEMBER meshEyebrowsVisible NOTIFY changed)
+    Q_PROPERTY(QString meshIrisesColor MEMBER meshIrisesColor NOTIFY changed)
+    Q_PROPERTY(bool meshIrisesVisible MEMBER meshIrisesVisible NOTIFY changed)
+    Q_PROPERTY(double meshContourWidth MEMBER meshContourWidth NOTIFY changed)
+    Q_PROPERTY(double meshTessellationWidth MEMBER meshTessellationWidth NOTIFY changed)
 
 public:
     using QObject::QObject;
 
     void load(const game_face::Settings& s);
     game_face::Settings toSettings() const;
+    // Restores the face mesh colours, visibility and widths to their defaults.
+    Q_INVOKABLE void resetMeshStyle();
 
     QString theme;
     QString language;
@@ -55,6 +72,20 @@ public:
     QString startSound;
     QString stopSound;
     double soundVolume = 0.5;
+    QString meshTessellationColor;
+    bool meshTessellationVisible = true;
+    QString meshFaceOvalColor;
+    bool meshFaceOvalVisible = true;
+    QString meshLipsColor;
+    bool meshLipsVisible = true;
+    QString meshEyesColor;
+    bool meshEyesVisible = true;
+    QString meshEyebrowsColor;
+    bool meshEyebrowsVisible = true;
+    QString meshIrisesColor;
+    bool meshIrisesVisible = true;
+    double meshContourWidth = 1;
+    double meshTessellationWidth = 1;
 
     // Not shown in the UI yet, but kept so saving doesn't drop them.
     bool autoStartWithOs = false;

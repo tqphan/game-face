@@ -8,6 +8,13 @@
 
 namespace game_face {
 
+// One group of face mesh lines (new). JSON keys: mesh.<group>.color, a
+// "#rrggbb" or "#aarrggbb" string, and mesh.<group>.visible.
+struct MeshStyle {
+    std::string color;
+    bool visible = true;
+};
+
 // Application settings. JSON keys are the original app's dotted names
 // (shown next to each field) so its user.settings.json can be imported.
 struct Settings {
@@ -40,6 +47,16 @@ struct Settings {
     std::string start_sound;
     std::string stop_sound;
     double sound_volume = 0.5;                // sound.volume (new), 0..1
+    // Face mesh drawn over the camera preview. Defaults are the original
+    // app's colours, using its right-side colour for both sides.
+    MeshStyle mesh_tessellation{"#46ffffff"};  // faint white
+    MeshStyle mesh_face_oval{"#12ff32"};
+    MeshStyle mesh_lips{"#0b006f"};
+    MeshStyle mesh_eyes{"#ff06bd"};
+    MeshStyle mesh_eyebrows{"#baff98"};
+    MeshStyle mesh_irises{"#ff3030"};
+    double mesh_contour_width = 1;            // mesh.contour.width, px, 1..6
+    double mesh_tessellation_width = 1;       // mesh.tessellation.width, px, 0.5..3
 };
 
 // Missing or malformed values keep their defaults; unknown keys are ignored.
