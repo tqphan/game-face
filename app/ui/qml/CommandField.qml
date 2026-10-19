@@ -21,7 +21,13 @@ ColumnLayout {
         Layout.fillWidth: true
         placeholderText: root.label
         readOnly: root.readOnly
-        selectByMouse: true
+        // A locked field doesn't highlight, take focus or select; no hover
+        // also hides the tooltip.
+        hoverEnabled: !readOnly
+        activeFocusOnPress: !readOnly
+        selectByMouse: !readOnly
+        // Material's color for disabled text, as on a locked ComboBox.
+        color: readOnly ? Material.hintTextColor : Material.foreground
         font.family: "monospace"
         Material.accent: root.error !== "" ? Material.Red : Material.Teal
         onEditingFinished: root.committed(text)

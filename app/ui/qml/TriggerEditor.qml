@@ -38,7 +38,10 @@ Frame {
             placeholderText: qsTr("Expression, e.g. jawOpen > 40")
             text: editor.expression
             readOnly: editor.locked
-            selectByMouse: true
+            hoverEnabled: !readOnly
+            activeFocusOnPress: !readOnly
+            selectByMouse: !readOnly
+            color: readOnly ? Material.hintTextColor : Material.foreground
             Material.accent: editor.expressionError !== "" ? Material.Red : Material.Teal
             onEditingFinished: if (text !== editor.expression) editor.expressionCommitted(text)
         }
