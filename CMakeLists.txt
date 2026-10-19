@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(game-face
-    VERSION 0.3.1
+    VERSION 0.3.2
     DESCRIPTION "Facial expressions to keyboard and mouse input"
     LANGUAGES CXX)
 
