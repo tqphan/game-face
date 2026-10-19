@@ -114,9 +114,14 @@ Pane {
 
         AppButton {
             Layout.fillWidth: true
-            text: App.settings.lockUi ? qsTr("Unlock UI") : qsTr("Lock UI")
+            text: App.settings.lockUi ? qsTr("LOCKED") : qsTr("LOCK UI")
             checkable: true
             checked: App.settings.lockUi
+            // Filled deep orange while locked, so it stands out from the other
+            // (teal and green) buttons.
+            highlighted: App.settings.lockUi
+            Material.accent: Theme.lockedButton
+            font.bold: App.settings.lockUi
             onToggled: App.settings.lockUi = checked
         }
 

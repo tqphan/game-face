@@ -11,6 +11,8 @@ QtObject {
     readonly property color primaryButton: Material.color(Material.Teal, Material.Shade700)   // 5.3:1
     readonly property color positiveButton: Material.color(Material.Green, Material.Shade800) // 5.1:1
     readonly property color dangerButton: Material.color(Material.Red, Material.Shade700)     // 5.0:1
+    // Lock UI while locked: a colour no other button uses.
+    readonly property color lockedButton: Material.color(Material.DeepOrange, Material.Shade900) // 5.6:1
 
     // Layer behind modal dialogs in the dark theme (Material's is too light).
     readonly property color darkModalDim: Qt.rgba(0, 0, 0, 0.7)
