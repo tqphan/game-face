@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-game-face turns facial expressions into keyboard and mouse input. It's a Qt 6 C++/QML app: MediaPipe Face Landmarker (through its C API) scores blendshapes (0–100) on each camera frame, and user-defined bindings map those scores to input commands, which the separate `input_devices_simulator` library injects into the OS. It replaces an earlier PySide6 + Vue app (removed; it's in git history before the merge of `qt-rewrite`).
+game-face turns facial expressions into keyboard and mouse input. It's a Qt 6 C++/QML app: MediaPipe Face Landmarker (through its C API) scores blendshapes (0–100) on each camera frame, and user-defined bindings map those scores to input commands, which the separate `input_devices_simulator` library injects into the OS. It replaces an earlier PySide6 + Vue app (removed in commit `d8c3135`; it's in the git history before that).
 
 ```powershell
 # Qt's MinGW kit is the only Qt kit installed locally
