@@ -11,10 +11,10 @@ import GameFace
 ApplicationWindow {
     id: dialog
 
-    width: 640
-    height: transientParent ? Math.min(760, transientParent.height - 80) : 700
-    minimumWidth: 400
-    minimumHeight: 300
+    width: 900
+    height: transientParent ? Math.min(820, transientParent.height - 80) : 760
+    minimumWidth: 640
+    minimumHeight: 420
     flags: Qt.Dialog
     modality: Qt.ApplicationModal
     title: qsTr("Settings")
@@ -134,6 +134,21 @@ ApplicationWindow {
         }
     }
 
+    component SettingsPage: ScrollView {
+        id: page
+        default property alias content: column.data
+        contentWidth: availableWidth
+        contentHeight: column.implicitHeight + 40  // 20 px margin above and below
+        clip: true
+        ColumnLayout {
+            id: column
+            x: 24
+            y: 20
+            width: page.availableWidth - 48
+            spacing: 8
+        }
+    }
+
     component LabeledSlider: ColumnLayout {
         id: labeled
         property string label
@@ -160,228 +175,239 @@ ApplicationWindow {
         }
     }
 
-    ScrollView {
+    // Categories on the left, the chosen one's settings on the right.
+    RowLayout {
         anchors.fill: parent
-        anchors.margins: 24
-        contentWidth: availableWidth
-        clip: true
+        spacing: 0
 
-        ColumnLayout {
-            width: parent.width
-            spacing: 8
-
-            Label { text: qsTr("Camera"); font.bold: true }
-            ComboBox {
-                Layout.fillWidth: true
-                model: App.cameras
-                textRole: "name"
-                valueRole: "id"
-                currentIndex: indexOfValue(dialog.settings.cameraId)
-                displayText: currentIndex < 0 ? qsTr("Default camera") : currentText
-                onActivated: dialog.settings.cameraId = currentValue
-            }
-
-            Label { text: qsTr("Theme"); font.bold: true }
-            ComboBox {
-                Layout.fillWidth: true
-                model: [
-                    { value: "dark", text: qsTr("Dark") },
-                    { value: "light", text: qsTr("Light") }
-                ]
-                textRole: "text"
-                valueRole: "value"
-                currentIndex: indexOfValue(dialog.settings.theme)
-                onActivated: dialog.settings.theme = currentValue
-            }
-
-            CheckBox {
-                text: qsTr("Allow input simulation (send keys and clicks)")
-                checked: dialog.settings.allowInputSimulation
-                onToggled: dialog.settings.allowInputSimulation = checked
-            }
-            CheckBox {
-                text: qsTr("Run stop commands when tracking stops or the camera drops out")
-                ToolTip.visible: hovered
-                ToolTip.delay: 500
-                ToolTip.text: qsTr("Bindings run once as if every blendshape dropped to 0.")
-                checked: dialog.settings.settleOnStop
-                onToggled: dialog.settings.settleOnStop = checked
-            }
-            CheckBox {
-                text: qsTr("Start tracking when game-face opens")
-                checked: dialog.settings.autoStartTracking
-                onToggled: dialog.settings.autoStartTracking = checked
-            }
-            CheckBox {
-                text: qsTr("Ask for confirmation before closing")
-                checked: dialog.settings.confirmOnClose
-                onToggled: dialog.settings.confirmOnClose = checked
-            }
-            CheckBox {
-                text: qsTr("Save settings automatically")
-                checked: dialog.settings.autoSaveSettings
-                onToggled: dialog.settings.autoSaveSettings = checked
-            }
-            CheckBox {
-                text: qsTr("Save profiles automatically")
-                checked: dialog.settings.autoSaveProfiles
-                onToggled: dialog.settings.autoSaveProfiles = checked
-            }
-
-            LabeledSlider {
-                label: qsTr("Webcam opacity")
-                value: dialog.settings.webcamOpacity
-                onMoved: (v) => dialog.settings.webcamOpacity = v
-            }
-            LabeledSlider {
-                label: qsTr("Landmarks opacity")
-                value: dialog.settings.landmarksOpacity
-                onMoved: (v) => dialog.settings.landmarksOpacity = v
-            }
-            LabeledSlider {
-                label: qsTr("Face detection confidence")
-                value: dialog.settings.detectionConfidence
-                onMoved: (v) => dialog.settings.detectionConfidence = v
-            }
-            LabeledSlider {
-                label: qsTr("Face presence confidence")
-                value: dialog.settings.presenceConfidence
-                onMoved: (v) => dialog.settings.presenceConfidence = v
-            }
-            LabeledSlider {
-                label: qsTr("Tracking confidence")
-                value: dialog.settings.trackingConfidence
-                onMoved: (v) => dialog.settings.trackingConfidence = v
-            }
-
-            MenuSeparator { Layout.fillWidth: true }
-
-            Label { text: qsTr("Sounds"); font.bold: true }
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                opacity: 0.8
-                text: qsTr("Played whenever any binding starts or stops.")
-            }
-            SoundChoice {
-                label: qsTr("Start sound")
-                sound: dialog.settings.startSound
-                onChosen: (s) => dialog.settings.startSound = s
-            }
-            SoundChoice {
-                label: qsTr("Stop sound")
-                sound: dialog.settings.stopSound
-                onChosen: (s) => dialog.settings.stopSound = s
-            }
-            LabeledSlider {
-                label: qsTr("Sound volume")
-                value: dialog.settings.soundVolume
-                onMoved: (v) => dialog.settings.soundVolume = v
-            }
-
-            MenuSeparator { Layout.fillWidth: true }
-
-            Label { text: qsTr("Face mesh"); font.bold: true }
-            MeshRow {
-                label: qsTr("Mesh (tessellation)")
-                meshColor: dialog.settings.meshTessellationColor
-                shown: dialog.settings.meshTessellationVisible
-                onColorPicked: (c) => dialog.settings.meshTessellationColor = c
-                onShownToggled: (v) => dialog.settings.meshTessellationVisible = v
-            }
-            MeshRow {
-                label: qsTr("Face oval")
-                meshColor: dialog.settings.meshFaceOvalColor
-                shown: dialog.settings.meshFaceOvalVisible
-                onColorPicked: (c) => dialog.settings.meshFaceOvalColor = c
-                onShownToggled: (v) => dialog.settings.meshFaceOvalVisible = v
-            }
-            MeshRow {
-                label: qsTr("Lips")
-                meshColor: dialog.settings.meshLipsColor
-                shown: dialog.settings.meshLipsVisible
-                onColorPicked: (c) => dialog.settings.meshLipsColor = c
-                onShownToggled: (v) => dialog.settings.meshLipsVisible = v
-            }
-            MeshRow {
-                label: qsTr("Eyes")
-                meshColor: dialog.settings.meshEyesColor
-                shown: dialog.settings.meshEyesVisible
-                onColorPicked: (c) => dialog.settings.meshEyesColor = c
-                onShownToggled: (v) => dialog.settings.meshEyesVisible = v
-            }
-            MeshRow {
-                label: qsTr("Eyebrows")
-                meshColor: dialog.settings.meshEyebrowsColor
-                shown: dialog.settings.meshEyebrowsVisible
-                onColorPicked: (c) => dialog.settings.meshEyebrowsColor = c
-                onShownToggled: (v) => dialog.settings.meshEyebrowsVisible = v
-            }
-            MeshRow {
-                label: qsTr("Irises")
-                meshColor: dialog.settings.meshIrisesColor
-                shown: dialog.settings.meshIrisesVisible
-                onColorPicked: (c) => dialog.settings.meshIrisesColor = c
-                onShownToggled: (v) => dialog.settings.meshIrisesVisible = v
-            }
-            LabeledSlider {
-                label: qsTr("Contour width")
-                from: 1
-                to: 6
-                stepSize: 0.5
-                decimals: 1
-                unit: " px"
-                value: dialog.settings.meshContourWidth
-                onMoved: (v) => dialog.settings.meshContourWidth = v
-            }
-            LabeledSlider {
-                label: qsTr("Mesh width")
-                from: 0.5
-                to: 3
-                stepSize: 0.25
-                decimals: 2
-                unit: " px"
-                value: dialog.settings.meshTessellationWidth
-                onMoved: (v) => dialog.settings.meshTessellationWidth = v
-            }
-            AppButton {
-                text: qsTr("Reset face mesh style")
-                onClicked: dialog.settings.resetMeshStyle()
-            }
-
-            MenuSeparator { Layout.fillWidth: true }
-
-            Label { text: qsTr("Import from the original game-face"); font.bold: true }
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                opacity: 0.8
-                text: qsTr("Choose the folder with user.profiles.json and user.settings.json (src/assets/json). This replaces your current profiles and settings.")
-            }
-            RowLayout {
-                AppButton {
-                    text: qsTr("Import…")
-                    onClicked: folderDialog.open()
-                }
-                Label {
-                    id: importResult
-                    Layout.fillWidth: true
-                    wrapMode: Text.WordWrap
-                }
-            }
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                opacity: 0.6
-                font.pixelSize: 12
-                text: qsTr("Settings are stored in %1").arg(App.configFolder)
+        ListView {
+            id: categories
+            Layout.preferredWidth: 200
+            Layout.fillHeight: true
+            Layout.topMargin: 12
+            clip: true
+            model: [qsTr("General"), qsTr("Camera"), qsTr("Input"), qsTr("Sounds"), qsTr("Display")]
+            delegate: ItemDelegate {
+                required property int index
+                required property string modelData
+                width: ListView.view.width
+                text: modelData
+                highlighted: ListView.isCurrentItem
+                onClicked: ListView.view.currentIndex = index
             }
         }
-    }
 
-    FolderDialog {
-        id: folderDialog
-        title: qsTr("Folder with user.profiles.json")
-        onAccepted: importResult.text = App.importLegacy(selectedFolder)
+        ToolSeparator {
+            orientation: Qt.Vertical
+            Layout.fillHeight: true
+        }
+
+        StackLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            currentIndex: categories.currentIndex
+
+            // General
+            SettingsPage {
+                Label { text: qsTr("Theme"); font.bold: true }
+                ComboBox {
+                    Layout.fillWidth: true
+                    model: [
+                        { value: "dark", text: qsTr("Dark") },
+                        { value: "light", text: qsTr("Light") }
+                    ]
+                    textRole: "text"
+                    valueRole: "value"
+                    currentIndex: indexOfValue(dialog.settings.theme)
+                    onActivated: dialog.settings.theme = currentValue
+                }
+                CheckBox {
+                    text: qsTr("Start tracking when game-face opens")
+                    checked: dialog.settings.autoStartTracking
+                    onToggled: dialog.settings.autoStartTracking = checked
+                }
+                CheckBox {
+                    text: qsTr("Ask for confirmation before closing")
+                    checked: dialog.settings.confirmOnClose
+                    onToggled: dialog.settings.confirmOnClose = checked
+                }
+                CheckBox {
+                    text: qsTr("Save settings automatically")
+                    checked: dialog.settings.autoSaveSettings
+                    onToggled: dialog.settings.autoSaveSettings = checked
+                }
+                CheckBox {
+                    text: qsTr("Save profiles automatically")
+                    checked: dialog.settings.autoSaveProfiles
+                    onToggled: dialog.settings.autoSaveProfiles = checked
+                }
+                Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    opacity: 0.6
+                    font.pixelSize: 12
+                    text: qsTr("Settings are stored in %1").arg(App.configFolder)
+                }
+            }
+
+            // Camera
+            SettingsPage {
+                ComboBox {
+                    Layout.fillWidth: true
+                    model: App.cameras
+                    textRole: "name"
+                    valueRole: "id"
+                    currentIndex: indexOfValue(dialog.settings.cameraId)
+                    displayText: currentIndex < 0 ? qsTr("Default camera") : currentText
+                    onActivated: dialog.settings.cameraId = currentValue
+                }
+                LabeledSlider {
+                    label: qsTr("Face detection confidence")
+                    value: dialog.settings.detectionConfidence
+                    onMoved: (v) => dialog.settings.detectionConfidence = v
+                }
+                LabeledSlider {
+                    label: qsTr("Face presence confidence")
+                    value: dialog.settings.presenceConfidence
+                    onMoved: (v) => dialog.settings.presenceConfidence = v
+                }
+                LabeledSlider {
+                    label: qsTr("Tracking confidence")
+                    value: dialog.settings.trackingConfidence
+                    onMoved: (v) => dialog.settings.trackingConfidence = v
+                }
+                Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    opacity: 0.6
+                    font.pixelSize: 12
+                    text: qsTr("New confidence values take effect when you click Save, which restarts tracking.")
+                }
+            }
+
+            // Input
+            SettingsPage {
+                CheckBox {
+                    text: qsTr("Allow input simulation (send keys and clicks)")
+                    checked: dialog.settings.allowInputSimulation
+                    onToggled: dialog.settings.allowInputSimulation = checked
+                }
+                CheckBox {
+                    text: qsTr("Run stop commands when tracking stops or the camera drops out")
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 500
+                    ToolTip.text: qsTr("Bindings run once as if every blendshape dropped to 0.")
+                    checked: dialog.settings.settleOnStop
+                    onToggled: dialog.settings.settleOnStop = checked
+                }
+            }
+
+            // Sounds
+            SettingsPage {
+                Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    opacity: 0.8
+                    text: qsTr("Played whenever any binding starts or stops.")
+                }
+                SoundChoice {
+                    label: qsTr("Start sound")
+                    sound: dialog.settings.startSound
+                    onChosen: (s) => dialog.settings.startSound = s
+                }
+                SoundChoice {
+                    label: qsTr("Stop sound")
+                    sound: dialog.settings.stopSound
+                    onChosen: (s) => dialog.settings.stopSound = s
+                }
+                LabeledSlider {
+                    label: qsTr("Sound volume")
+                    value: dialog.settings.soundVolume
+                    onMoved: (v) => dialog.settings.soundVolume = v
+                }
+            }
+
+            // Display
+            SettingsPage {
+                LabeledSlider {
+                    label: qsTr("Webcam opacity")
+                    value: dialog.settings.webcamOpacity
+                    onMoved: (v) => dialog.settings.webcamOpacity = v
+                }
+                LabeledSlider {
+                    label: qsTr("Landmarks opacity")
+                    value: dialog.settings.landmarksOpacity
+                    onMoved: (v) => dialog.settings.landmarksOpacity = v
+                }
+
+                Label { text: qsTr("Face mesh"); font.bold: true }
+                MeshRow {
+                    label: qsTr("Mesh (tessellation)")
+                    meshColor: dialog.settings.meshTessellationColor
+                    shown: dialog.settings.meshTessellationVisible
+                    onColorPicked: (c) => dialog.settings.meshTessellationColor = c
+                    onShownToggled: (v) => dialog.settings.meshTessellationVisible = v
+                }
+                MeshRow {
+                    label: qsTr("Face oval")
+                    meshColor: dialog.settings.meshFaceOvalColor
+                    shown: dialog.settings.meshFaceOvalVisible
+                    onColorPicked: (c) => dialog.settings.meshFaceOvalColor = c
+                    onShownToggled: (v) => dialog.settings.meshFaceOvalVisible = v
+                }
+                MeshRow {
+                    label: qsTr("Lips")
+                    meshColor: dialog.settings.meshLipsColor
+                    shown: dialog.settings.meshLipsVisible
+                    onColorPicked: (c) => dialog.settings.meshLipsColor = c
+                    onShownToggled: (v) => dialog.settings.meshLipsVisible = v
+                }
+                MeshRow {
+                    label: qsTr("Eyes")
+                    meshColor: dialog.settings.meshEyesColor
+                    shown: dialog.settings.meshEyesVisible
+                    onColorPicked: (c) => dialog.settings.meshEyesColor = c
+                    onShownToggled: (v) => dialog.settings.meshEyesVisible = v
+                }
+                MeshRow {
+                    label: qsTr("Eyebrows")
+                    meshColor: dialog.settings.meshEyebrowsColor
+                    shown: dialog.settings.meshEyebrowsVisible
+                    onColorPicked: (c) => dialog.settings.meshEyebrowsColor = c
+                    onShownToggled: (v) => dialog.settings.meshEyebrowsVisible = v
+                }
+                MeshRow {
+                    label: qsTr("Irises")
+                    meshColor: dialog.settings.meshIrisesColor
+                    shown: dialog.settings.meshIrisesVisible
+                    onColorPicked: (c) => dialog.settings.meshIrisesColor = c
+                    onShownToggled: (v) => dialog.settings.meshIrisesVisible = v
+                }
+                LabeledSlider {
+                    label: qsTr("Contour width")
+                    from: 1
+                    to: 6
+                    stepSize: 0.5
+                    decimals: 1
+                    unit: " px"
+                    value: dialog.settings.meshContourWidth
+                    onMoved: (v) => dialog.settings.meshContourWidth = v
+                }
+                LabeledSlider {
+                    label: qsTr("Mesh width")
+                    from: 0.5
+                    to: 3
+                    stepSize: 0.25
+                    decimals: 2
+                    unit: " px"
+                    value: dialog.settings.meshTessellationWidth
+                    onMoved: (v) => dialog.settings.meshTessellationWidth = v
+                }
+                AppButton {
+                    text: qsTr("Reset face mesh style")
+                    onClicked: dialog.settings.resetMeshStyle()
+                }
+            }
+        }
     }
 }
