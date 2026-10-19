@@ -52,8 +52,8 @@ struct ProfileSet {
 // Lenient about numbers stored as strings; runtime-only fields are ignored.
 Result<ProfileSet> profilesFromJson(std::string_view json);
 
-// Writes the original layout (so the Python app can still read it) with a
-// top-level "schemaVersion": 2 and no runtime state.
+// Writes the original layout with a top-level "schemaVersion": 2 and no
+// runtime state.
 std::string profilesToJson(const ProfileSet& profiles);
 
 Result<ProfileSet> loadProfiles(const std::filesystem::path& path);

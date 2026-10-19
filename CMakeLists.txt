@@ -21,7 +21,7 @@ if(GAME_FACE_BUILD_TESTS)
 endif()
 
 # The face landmarker model shipped with the Python app, reused as-is.
-set(GAME_FACE_FACE_MODEL ${PROJECT_SOURCE_DIR}/src/assets/mediapipe/face_landmarker.task)
+set(GAME_FACE_FACE_MODEL ${PROJECT_SOURCE_DIR}/assets/face_landmarker.task)
 include(FetchMediaPipe)
 
 # Keyboard/mouse injection. A checkout next to this one is used when present

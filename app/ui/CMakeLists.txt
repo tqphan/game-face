@@ -36,8 +36,8 @@ qt_add_qml_module(game-face
 
 qt_add_resources(game-face "images"
     PREFIX /game-face
-    BASE ${PROJECT_SOURCE_DIR}/src/assets/images
-    FILES ${PROJECT_SOURCE_DIR}/src/assets/images/icon.png
+    BASE ${PROJECT_SOURCE_DIR}/assets
+    FILES ${PROJECT_SOURCE_DIR}/assets/icon.png
 )
 
 if(WIN32)

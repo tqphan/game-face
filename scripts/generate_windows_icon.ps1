@@ -1,4 +1,4 @@
-# Generates packaging/windows/game-face.ico from src/assets/images/icon.png.
+# Generates packaging/windows/game-face.ico from assets/icon.png.
 # The .ico holds PNG-compressed images at the sizes Windows asks for (taskbar,
 # Explorer, Start menu, Add/Remove Programs). Run it again when icon.png changes:
 #
@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
 $root = Split-Path -Parent $PSScriptRoot
-$source = Join-Path $root 'src\assets\images\icon.png'
+$source = Join-Path $root 'assets\icon.png'
 $target = Join-Path $root 'packaging\windows\game-face.ico'
 $sizes = 16, 20, 24, 32, 40, 48, 64, 128, 256
 
