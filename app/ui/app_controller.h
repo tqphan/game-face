@@ -16,7 +16,6 @@
 #include <QQmlEngine>
 #include <QThread>
 #include <QTimer>
-#include <QUrl>
 #include <QVariantList>
 
 #include <memory>
@@ -86,9 +85,6 @@ public:
     Q_INVOKABLE void addBinding();
     Q_INVOKABLE void removeBinding(int row);
     Q_INVOKABLE void previewSound(const QString& name) { soundPlayer_->preview(name); }
-    // Imports user.profiles.json / user.settings.json from the original app.
-    // Returns a message for the user.
-    Q_INVOKABLE QString importLegacy(const QUrl& folder);
     // Stops tracking and auto-saves. Call before quitting.
     Q_INVOKABLE void shutdown();
 

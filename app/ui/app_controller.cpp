@@ -1,4 +1,4 @@
-﻿#include "app_controller.h"
+#include "app_controller.h"
 
 #include <game_face/core/settings.h>
 
@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <QCoreApplication>
-#include <QDir>
 #include <QFileInfo>
 #include <QImage>
 #include <QStandardPaths>
@@ -460,7 +459,7 @@ bool AppController::saveSettings()
     return true;
 }
 
-// Saves without restarting tracking (auto-save, import, quit).
+// Saves without restarting tracking (auto-save, quit).
 bool AppController::writeSettings()
 {
     saveSettingsTimer_.stop();
@@ -523,39 +522,6 @@ void AppController::removeBinding(int row)
         return;
     bindings.erase(bindings.begin() + row);
     profileStructureChanged();
-}
-
-QString AppController::importLegacy(const QUrl& folder)
-{
-    const QString dir = folder.toLocalFile();
-    const auto profilesPath = toPath(dir + "/user.profiles.json");
-    const auto settingsPath = toPath(dir + "/user.settings.json");
-    QStringList imported;
-
-    if (std::filesystem::exists(profilesPath)) {
-        auto loaded = game_face::loadProfiles(profilesPath);
-        if (!loaded)
-            return QString::fromStdString(loaded.error().message);
-        profileSet_ = std::move(*loaded);
-        profileStructureChanged();
-        emit profileIndexChanged();
-        saveProfiles();
-        imported << tr("%n profile(s)", nullptr, static_cast<int>(profileSet_.profiles.size()));
-    }
-    if (std::filesystem::exists(settingsPath)) {
-        auto loaded = game_face::loadSettings(settingsPath);
-        if (!loaded)
-            return QString::fromStdString(loaded.error().message);
-        const QString camera = settings_->cameraId;  // the old file has no usable camera ID
-        settings_->load(*loaded);
-        settings_->cameraId = camera;
-        writeSettings();
-        imported << tr("settings");
-    }
-
-    if (imported.isEmpty())
-        return tr("No user.profiles.json or user.settings.json in %1").arg(QDir::toNativeSeparators(dir));
-    return tr("Imported %1.").arg(imported.join(tr(" and ")));
 }
 
 void AppController::shutdown()
