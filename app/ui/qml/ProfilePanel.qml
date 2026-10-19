@@ -38,7 +38,11 @@ Pane {
             }
             AppButton {
                 Layout.fillWidth: true
-                text: qsTr("Save profiles")
+                // Highlighted while there are unsaved changes; a failed save
+                // keeps it that way and reports the error in the status line.
+                text: App.profilesDirty ? qsTr("Save profiles •") : qsTr("Saved")
+                highlighted: App.profilesDirty
+                enabled: App.profilesDirty
                 onClicked: App.saveProfiles()
             }
             AppButton {

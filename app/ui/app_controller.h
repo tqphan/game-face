@@ -38,6 +38,8 @@ class AppController : public QObject {
     Q_PROPERTY(int profileIndex READ profileIndex WRITE setProfileIndex NOTIFY profileIndexChanged)
     Q_PROPERTY(bool tracking READ tracking NOTIFY trackingChanged)
     Q_PROPERTY(bool faceFound READ faceFound NOTIFY faceFoundChanged)
+    // Profiles changed since they were last loaded or saved.
+    Q_PROPERTY(bool profilesDirty READ profilesDirty NOTIFY profilesDirtyChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
     Q_PROPERTY(QString lastCommand READ lastCommand NOTIFY lastCommandChanged)
     Q_PROPERTY(QVariantList cameras READ cameras NOTIFY camerasChanged)
@@ -60,6 +62,7 @@ public:
     void setProfileIndex(int index);
     bool tracking() const { return tracking_; }
     bool faceFound() const { return faceFound_; }
+    bool profilesDirty() const { return profilesDirty_; }
     QString statusMessage() const { return statusMessage_; }
     QString lastCommand() const { return lastCommand_; }
     QVariantList cameras() const;
@@ -88,6 +91,7 @@ signals:
     void profileIndexChanged();
     void trackingChanged();
     void faceFoundChanged();
+    void profilesDirtyChanged();
     void statusMessageChanged();
     void lastCommandChanged();
     void camerasChanged();
@@ -107,6 +111,9 @@ private:
     void retryCamera();
     void clearLiveState();
     void profileStructureChanged();
+    // Marks the profiles unsaved and starts the auto-save timer if it's on.
+    void profilesEdited();
+    void setProfilesDirty(bool dirty);
     void sendProfileToWorker(bool keep_state);
     void sendInjectionState();
     void setStatus(const QString& message);
@@ -148,6 +155,7 @@ private:
     bool initialized_ = false;
     bool tracking_ = false;
     bool faceFound_ = false;
+    bool profilesDirty_ = false;
     QString statusMessage_;
     QString lastCommand_;
     std::vector<game_face::Landmark> landmarks_;

@@ -68,8 +68,7 @@ AppController::AppController(QObject* parent)
     connect(settings_, &SettingsObject::changed, this, &AppController::onSettingsChanged);
     connect(bindingModel_, &BindingListModel::edited, this, [this] {
         sendProfileToWorker(true);
-        if (settings_->autoSaveProfiles)
-            saveProfilesTimer_.start();
+        profilesEdited();
     });
     connect(&mediaDevices_, &QMediaDevices::videoInputsChanged, this, &AppController::onCamerasChanged);
 
@@ -151,8 +150,7 @@ void AppController::setProfileIndex(int index)
     profileSet_.selection = index;
     bindingModel_->reload();
     sendProfileToWorker(false);
-    if (settings_->autoSaveProfiles)
-        saveProfilesTimer_.start();
+    profilesEdited();
     emit profileIndexChanged();
 }
 
@@ -415,8 +413,24 @@ void AppController::profileStructureChanged()
     profileModel_->reload();
     bindingModel_->reload();
     sendProfileToWorker(false);
-    if (initialized_ && settings_->autoSaveProfiles)
+    // Loading the profiles at startup isn't an edit.
+    if (initialized_)
+        profilesEdited();
+}
+
+void AppController::profilesEdited()
+{
+    setProfilesDirty(true);
+    if (settings_->autoSaveProfiles)
         saveProfilesTimer_.start();
+}
+
+void AppController::setProfilesDirty(bool dirty)
+{
+    if (dirty == profilesDirty_)
+        return;
+    profilesDirty_ = dirty;
+    emit profilesDirtyChanged();
 }
 
 bool AppController::saveSettings()
@@ -451,6 +465,7 @@ bool AppController::saveProfiles()
         setStatus(QString::fromStdString(saved.error().message));
         return false;
     }
+    setProfilesDirty(false);
     return true;
 }
 
