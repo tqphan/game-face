@@ -57,7 +57,7 @@ SignedUninstaller=yes
 #endif
 
 [Tasks]
-Name: trustcert; Description: "Trust the ""{#CertName}"" code-signing certificate (game-face won't start without it)"
+Name: trustcert; Description: "Trust the ""{#CertName}"" code-signing certificate (required: game-face won't start without it)"
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
@@ -78,6 +78,41 @@ Filename: "{app}\bin\game-face.exe"; Description: "{cm:LaunchProgram,game-face}"
 Filename: "{sys}\certutil.exe"; Parameters: "-delstore Root {#CertThumbprint}"; Flags: runhidden; Tasks: trustcert; RunOnceId: "UntrustCert"
 
 [Code]
+// What happens without the certificate; on the explanation page and in the
+// warning when the box is unticked.
+function UntrustedError: String;
+begin
+  Result := 'Windows will refuse to start game-face, with an error such as ' +
+    '"A referral was returned from the server" or "The requested operation requires elevation."';
+end;
+
+procedure InitializeWizard;
+begin
+  // After Welcome (skipped by default), so it comes before the task checkboxes.
+  CreateOutputMsgPage(wpWelcome, 'Code-signing certificate',
+    'Why game-face needs to trust its certificate',
+    'game-face sends key presses and mouse input to other programs, including programs ' +
+    'running as administrator. Windows only allows that for an app installed in Program Files ' +
+    'whose signature it trusts.' + #13#10#13#10 +
+    'game-face is signed with its own self-signed certificate, "{#CertName}", not one bought from ' +
+    'a certificate authority, so Windows doesn''t trust it on its own. On the next page, Setup offers to ' +
+    'add it to this computer''s Trusted Root Certification Authorities store. Uninstalling game-face ' +
+    'removes it again.' + #13#10#13#10 +
+    'If the certificate isn''t trusted: ' + UntrustedError + #13#10#13#10 +
+    'A trusted root certificate is trusted for everything it signs, so only install it if you ' +
+    'trust the game-face project.');
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if (CurPageID = wpSelectTasks) and not WizardIsTaskSelected('trustcert') then
+    Result := SuppressibleMsgBox('You chose not to trust the "{#CertName}" certificate.' + #13#10#13#10 +
+      UntrustedError + #13#10#13#10 +
+      'Skip it only if this computer already trusts the certificate. Continue anyway?',
+      mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDYES) = IDYES;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
