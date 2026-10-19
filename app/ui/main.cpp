@@ -46,6 +46,7 @@ int main(int argc, char** argv)
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName("game-face");
     QGuiApplication::setApplicationDisplayName("game-face");
+    QGuiApplication::setApplicationVersion(GAME_FACE_VERSION);
     QGuiApplication::setWindowIcon(QIcon(":/game-face/icon.png"));
     QQuickStyle::setStyle("Material");
 

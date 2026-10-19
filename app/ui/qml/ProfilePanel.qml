@@ -19,10 +19,20 @@ Pane {
         anchors.fill: parent
         spacing: 10
 
-        Label {
-            text: "game-face"
-            font.pixelSize: 22
-            font.bold: true
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignBaseline
+                text: "game-face"
+                font.pixelSize: 22
+                font.bold: true
+            }
+            Label {
+                Layout.alignment: Qt.AlignRight | Qt.AlignBaseline
+                text: "v" + Qt.application.version
+                opacity: 0.6
+            }
         }
 
         RowLayout {

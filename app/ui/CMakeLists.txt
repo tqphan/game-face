@@ -61,6 +61,9 @@ if(WIN32)
     target_sources(game-face PRIVATE "${_icon_rc}")
 endif()
 
+# The project version (top-level CMakeLists.txt), shown next to the app name.
+target_compile_definitions(game-face PRIVATE GAME_FACE_VERSION="${PROJECT_VERSION}")
+
 target_link_libraries(game-face PRIVATE
     game_face_core
     input_devices_simulator::input_devices_simulator
