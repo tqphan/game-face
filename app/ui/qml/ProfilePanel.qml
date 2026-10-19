@@ -27,6 +27,7 @@ Pane {
 
         RowLayout {
             Layout.fillWidth: true
+            uniformCellSizes: true
             AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Create profile")
@@ -68,6 +69,8 @@ Pane {
                     width: ListView.view.width
                     text: name
                     highlighted: index === App.profileIndex
+                    // Rows, not the list, so a locked list still scrolls.
+                    enabled: !App.settings.lockUi
                     onClicked: App.profileIndex = index
                 }
 
@@ -82,6 +85,8 @@ Pane {
 
         RowLayout {
             Layout.fillWidth: true
+            // Equal widths; otherwise the longer label gets the wider button.
+            uniformCellSizes: true
             AppButton {
                 Layout.fillWidth: true
                 text: qsTr("Settings")
@@ -99,11 +104,14 @@ Pane {
             text: App.tracking ? qsTr("Stop tracking") : qsTr("Start tracking")
             highlighted: App.tracking
             Material.accent: Theme.positiveButton
+            enabled: !App.settings.lockUi
             onClicked: App.toggleTracking()
         }
 
-        Switch {
-            text: qsTr("Lock UI")
+        AppButton {
+            Layout.fillWidth: true
+            text: App.settings.lockUi ? qsTr("Unlock UI") : qsTr("Lock UI")
+            checkable: true
             checked: App.settings.lockUi
             onToggled: App.settings.lockUi = checked
         }
