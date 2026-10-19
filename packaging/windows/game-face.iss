@@ -48,6 +48,7 @@ OutputBaseFilename=game-face-windows-setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=game-face.ico
 UninstallDisplayName=game-face
 UninstallDisplayIcon={app}\bin\game-face.exe
 #ifdef Sign

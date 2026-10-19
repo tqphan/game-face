@@ -40,6 +40,15 @@ qt_add_resources(game-face "images"
     FILES ${PROJECT_SOURCE_DIR}/src/assets/images/icon.png
 )
 
+if(WIN32)
+    # The exe's own icon, used by the taskbar, Explorer, shortcuts and
+    # Add/Remove Programs (setWindowIcon only covers the window).
+    # scripts/generate_windows_icon.ps1 makes the .ico from icon.png.
+    set(_icon_rc "${CMAKE_CURRENT_BINARY_DIR}/game-face-icon.rc")
+    file(WRITE "${_icon_rc}" "IDI_ICON1 ICON \"${PROJECT_SOURCE_DIR}/packaging/windows/game-face.ico\"\n")
+    target_sources(game-face PRIVATE "${_icon_rc}")
+endif()
+
 target_link_libraries(game-face PRIVATE
     game_face_core
     input_devices_simulator::input_devices_simulator
