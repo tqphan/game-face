@@ -30,6 +30,8 @@ private slots:
         QVERIFY(s->camera_id.empty());  // webcam.deviceId is a browser ID; not imported
         QVERIFY(s->confirm_on_close);   // not in the original file: default on
         QVERIFY(!s->settle_on_stop);    // not in the original file: default off
+        QVERIFY(s->start_sound.empty());  // no sounds by default
+        QVERIFY(s->stop_sound.empty());
     }
 
     void defaultsForMissingAndMalformedValues()
@@ -54,6 +56,9 @@ private slots:
         s.lock_ui = true;
         s.confirm_on_close = false;
         s.settle_on_stop = true;
+        s.start_sound = "click1";
+        s.stop_sound = "mouserelease1";
+        s.sound_volume = 0.75;
 
         auto reread = settingsFromJson(settingsToJson(s));
         QVERIFY(reread.has_value());
@@ -64,6 +69,9 @@ private slots:
         QVERIFY(reread->lock_ui);
         QVERIFY(!reread->confirm_on_close);
         QVERIFY(reread->settle_on_stop);
+        QCOMPARE(reread->start_sound, s.start_sound);
+        QCOMPARE(reread->stop_sound, s.stop_sound);
+        QCOMPARE(reread->sound_volume, 0.75);
     }
 
     void saveAndLoad()

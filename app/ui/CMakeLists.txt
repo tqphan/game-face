@@ -31,13 +31,25 @@ qt_add_qml_module(game-face
         landmark_overlay.h landmark_overlay.cpp
         list_models.h list_models.cpp
         settings_object.h settings_object.cpp
+        sound_player.h sound_player.cpp
         tracking_worker.h tracking_worker.cpp
 )
 
 qt_add_resources(game-face "images"
     PREFIX /game-face
     BASE ${PROJECT_SOURCE_DIR}/assets
-    FILES ${PROJECT_SOURCE_DIR}/assets/icon.png
+    FILES
+        ${PROJECT_SOURCE_DIR}/assets/icon.png
+        ${PROJECT_SOURCE_DIR}/assets/sounds/click1.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/click3.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/click5.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/mouseclick1.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/mouserelease1.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/rollover2.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/rollover4.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/switch12.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/switch13.wav
+        ${PROJECT_SOURCE_DIR}/assets/sounds/switch7.wav
 )
 
 if(WIN32)

@@ -50,6 +50,29 @@ ApplicationWindow {
 
     readonly property var settings: App.settings
 
+    component SoundChoice: RowLayout {
+        id: choice
+        property string label
+        property string sound
+        signal chosen(string sound)
+        Layout.fillWidth: true
+        Label {
+            Layout.preferredWidth: 90
+            text: choice.label
+        }
+        ComboBox {
+            Layout.fillWidth: true
+            model: [{ id: "", name: qsTr("None") }].concat(App.sounds)
+            textRole: "name"
+            valueRole: "id"
+            currentIndex: Math.max(0, indexOfValue(choice.sound))
+            onActivated: {
+                choice.chosen(currentValue)
+                App.previewSound(currentValue)
+            }
+        }
+    }
+
     component LabeledSlider: ColumnLayout {
         id: labeled
         property string label
@@ -163,6 +186,31 @@ ApplicationWindow {
                 label: qsTr("Tracking confidence")
                 value: dialog.settings.trackingConfidence
                 onMoved: (v) => dialog.settings.trackingConfidence = v
+            }
+
+            MenuSeparator { Layout.fillWidth: true }
+
+            Label { text: qsTr("Sounds"); font.bold: true }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                opacity: 0.8
+                text: qsTr("Played whenever any binding starts or stops.")
+            }
+            SoundChoice {
+                label: qsTr("Start sound")
+                sound: dialog.settings.startSound
+                onChosen: (s) => dialog.settings.startSound = s
+            }
+            SoundChoice {
+                label: qsTr("Stop sound")
+                sound: dialog.settings.stopSound
+                onChosen: (s) => dialog.settings.stopSound = s
+            }
+            LabeledSlider {
+                label: qsTr("Sound volume")
+                value: dialog.settings.soundVolume
+                onMoved: (v) => dialog.settings.soundVolume = v
             }
 
             MenuSeparator { Layout.fillWidth: true }

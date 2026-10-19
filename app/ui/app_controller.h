@@ -2,6 +2,7 @@
 
 #include "list_models.h"
 #include "settings_object.h"
+#include "sound_player.h"
 #include "tracking_worker.h"
 
 #include <game_face/core/face_tracker.h>
@@ -45,6 +46,8 @@ class AppController : public QObject {
     Q_PROPERTY(QVariantList cameras READ cameras NOTIFY camerasChanged)
     Q_PROPERTY(QObject* videoOutput READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
     Q_PROPERTY(QString configFolder READ configFolder CONSTANT)
+    // [{id, name}] of the start/stop sounds Settings offers.
+    Q_PROPERTY(QVariantList sounds READ sounds CONSTANT)
 
 public:
     explicit AppController(QObject* parent = nullptr);
@@ -69,6 +72,7 @@ public:
     QObject* videoOutput() const { return videoOutput_; }
     void setVideoOutput(QObject* output);
     QString configFolder() const;
+    QVariantList sounds() const { return SoundPlayer::sounds(); }
 
     const std::vector<game_face::Landmark>& landmarks() const { return landmarks_; }
 
@@ -81,6 +85,7 @@ public:
     Q_INVOKABLE void removeProfile();
     Q_INVOKABLE void addBinding();
     Q_INVOKABLE void removeBinding(int row);
+    Q_INVOKABLE void previewSound(const QString& name) { soundPlayer_->preview(name); }
     // Imports user.profiles.json / user.settings.json from the original app.
     // Returns a message for the user.
     Q_INVOKABLE QString importLegacy(const QUrl& folder);
@@ -116,6 +121,7 @@ private:
     void setProfilesDirty(bool dirty);
     void sendProfileToWorker(bool keep_state);
     void sendWorkerSettings();
+    void applySoundSettings();
     void setStatus(const QString& message);
     void setFaceFound(bool found);
     QCameraDevice chooseCamera() const;
@@ -132,6 +138,7 @@ private:
     ProfileListModel* profileModel_;
     BindingListModel* bindingModel_;
     BlendshapeModel* blendshapeModel_;
+    SoundPlayer* soundPlayer_;
 
     QMediaDevices mediaDevices_;
     QMediaCaptureSession session_;

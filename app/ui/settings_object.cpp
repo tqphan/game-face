@@ -17,6 +17,9 @@ void SettingsObject::load(const game_face::Settings& s)
     lockUi = s.lock_ui;
     confirmOnClose = s.confirm_on_close;
     settleOnStop = s.settle_on_stop;
+    startSound = QString::fromStdString(s.start_sound);
+    stopSound = QString::fromStdString(s.stop_sound);
+    soundVolume = s.sound_volume;
     autoStartWithOs = s.auto_start_with_os;
     runOnSecureDesktop = s.run_on_secure_desktop;
     emit changed();
@@ -40,6 +43,9 @@ game_face::Settings SettingsObject::toSettings() const
     s.lock_ui = lockUi;
     s.confirm_on_close = confirmOnClose;
     s.settle_on_stop = settleOnStop;
+    s.start_sound = startSound.toStdString();
+    s.stop_sound = stopSound.toStdString();
+    s.sound_volume = soundVolume;
     s.auto_start_with_os = autoStartWithOs;
     s.run_on_secure_desktop = runOnSecureDesktop;
     return s;

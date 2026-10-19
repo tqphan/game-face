@@ -27,8 +27,13 @@ struct BindingStatus {
 class BindingEngine {
 public:
     using CommandSink = std::function<void(const std::string& command)>;
+    enum class Edge { Start, Stop };
+    // Called whenever a binding's start or stop fires, even if that side has
+    // no command; before the command, if there is one.
+    using EdgeSink = std::function<void(Edge edge)>;
 
     explicit BindingEngine(CommandSink sink);
+    void setEdgeSink(EdgeSink sink) { edge_sink_ = std::move(sink); }
 
     // Copies the profile, compiles its expressions and resets all state.
     void setProfile(const Profile& profile);
@@ -72,11 +77,12 @@ private:
     void compileProfile(const Profile& profile);
     void updateStatus(std::size_t index);
     void processSimple(CompiledBinding& binding, const BlendshapeScores& scores);
-    void processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms);
-    void fire(const std::string& command);
+    void processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms, Edge edge);
+    void fire(const std::string& command, Edge edge);
     void resetBinding(CompiledBinding& binding);
 
     CommandSink sink_;
+    EdgeSink edge_sink_;
     std::vector<CompiledBinding> bindings_;
     std::vector<BindingStatus> status_;
 };

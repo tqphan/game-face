@@ -8,6 +8,10 @@ namespace ids = input_devices_simulator;
 TrackingWorker::TrackingWorker()
     : engine_([this](const std::string& command) { execute(command); })
 {
+    engine_.setEdgeSink([this](game_face::BindingEngine::Edge edge) {
+        if (!settling_ && onEdge)
+            onEdge(edge);
+    });
 }
 
 TrackingWorker::~TrackingWorker()
@@ -143,7 +147,11 @@ void TrackingWorker::releaseAll()
 // held keys and buttons.
 void TrackingWorker::settle()
 {
-    if (settle_on_stop_ && saw_face_ && clock_.isValid())
+    if (settle_on_stop_ && saw_face_ && clock_.isValid()) {
+        // Settling is cleanup, not something the user did: no sounds.
+        settling_ = true;
         engine_.settle(static_cast<double>(clock_.elapsed()));
+        settling_ = false;
+    }
     saw_face_ = false;
 }

@@ -117,8 +117,8 @@ void BindingEngine::process(const BlendshapeScores& scores, double time_ms)
         if (binding.simplified) {
             processSimple(binding, scores);
         } else {
-            processTrigger(binding.start, scores, time_ms);
-            processTrigger(binding.stop, scores, time_ms);
+            processTrigger(binding.start, scores, time_ms, Edge::Start);
+            processTrigger(binding.stop, scores, time_ms, Edge::Stop);
         }
         updateStatus(i);
     }
@@ -144,18 +144,19 @@ void BindingEngine::processSimple(CompiledBinding& binding, const BlendshapeScor
     const double value = scores[*binding.blendshape];
     if (binding.armed) {
         if (binding.threshold < value) {
-            fire(binding.start_command);
+            fire(binding.start_command, Edge::Start);
             binding.armed = false;
         }
     } else if (binding.threshold > value) {
-        fire(binding.stop_command);
+        fire(binding.stop_command, Edge::Stop);
         binding.armed = true;
     }
 }
 
 // Fires once when the expression turns true, after it has stayed true for
 // longer than debounce_ms; re-arms as soon as it turns false.
-void BindingEngine::processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms)
+void BindingEngine::processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms,
+                                   Edge edge)
 {
     const bool valid = trigger.expression && trigger.expression->test(scores);
     if (!valid) {
@@ -174,12 +175,14 @@ void BindingEngine::processTrigger(CompiledTrigger& trigger, const BlendshapeSco
         if (time_ms - *trigger.since_ms <= trigger.debounce_ms)
             return;
     }
-    fire(trigger.command);
+    fire(trigger.command, edge);
     trigger.activated = true;
 }
 
-void BindingEngine::fire(const std::string& command)
+void BindingEngine::fire(const std::string& command, Edge edge)
 {
+    if (edge_sink_)
+        edge_sink_(edge);
     if (sink_ && !isBlank(command))
         sink_(command);
 }

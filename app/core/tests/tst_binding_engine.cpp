@@ -189,6 +189,24 @@ private slots:
         QCOMPARE(h.sent, Commands{"open"});
     }
 
+    void edgesForSimpleAndAdvancedBindings()
+    {
+        Harness h({simpleBinding("jawOpen", 50, "", "jaw-up"),
+                   advancedBinding("browInnerUp > 40", "press", "browInnerUp < 40", "")});
+        std::vector<BindingEngine::Edge> edges;
+        h.engine.setEdgeSink([&](BindingEngine::Edge e) { edges.push_back(e); });
+        using enum BindingEngine::Edge;
+
+        // A side with no command still reports its edge.
+        h.feed("jawOpen", {60, 60, 10});
+        QCOMPARE(edges, (std::vector{Start, Stop}));
+        edges.clear();
+        // The stop trigger starts "fired", so it reports nothing until the
+        // start has fired.
+        h.feed("browInnerUp", {10, 60, 60, 10});
+        QCOMPARE(edges, (std::vector{Start, Stop}));
+    }
+
     void updateProfileKeepsState()
     {
         Harness h({simpleBinding("jawOpen", 50, "start", "stop")});

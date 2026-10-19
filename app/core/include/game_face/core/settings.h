@@ -34,6 +34,12 @@ struct Settings {
     // settle.on.stop (new): when tracking stops or the camera is interrupted,
     // run the bindings once as if every blendshape dropped to 0.
     bool settle_on_stop = false;
+    // sound.start / sound.stop (new): played whenever any binding's start or
+    // stop fires; a name from assets/sounds without the extension, or empty
+    // for none.
+    std::string start_sound;
+    std::string stop_sound;
+    double sound_volume = 0.5;                // sound.volume (new), 0..1
 };
 
 // Missing or malformed values keep their defaults; unknown keys are ignored.

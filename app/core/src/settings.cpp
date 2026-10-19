@@ -51,6 +51,9 @@ Result<Settings> settingsFromJson(std::string_view json)
     s.lock_ui = toBool(o.value("lock.ui"), s.lock_ui);
     s.confirm_on_close = toBool(o.value("confirm.on.close"), s.confirm_on_close);
     s.settle_on_stop = toBool(o.value("settle.on.stop"), s.settle_on_stop);
+    s.start_sound = toStdString(o.value("sound.start"));
+    s.stop_sound = toStdString(o.value("sound.stop"));
+    s.sound_volume = unit(o.value("sound.volume"), s.sound_volume);
     return s;
 }
 
@@ -75,6 +78,9 @@ std::string settingsToJson(const Settings& s)
         {"lock.ui", s.lock_ui},
         {"confirm.on.close", s.confirm_on_close},
         {"settle.on.stop", s.settle_on_stop},
+        {"sound.start", toQString(s.start_sound)},
+        {"sound.stop", toQString(s.stop_sound)},
+        {"sound.volume", s.sound_volume},
     };
     return QJsonDocument(root).toJson(QJsonDocument::Indented).toStdString();
 }

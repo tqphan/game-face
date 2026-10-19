@@ -48,6 +48,8 @@ public:
     std::function<void(FrameResult)> onFrame;
     std::function<void(QString command, bool injected)> onCommand;
     std::function<void(QString message)> onError;
+    // A binding's start or stop fired (for its sound); not while settling.
+    std::function<void(game_face::BindingEngine::Edge edge)> onEdge;
 
     // Returns an error message, or an empty string on success.
     QString start(const TrackerConfig& config);
@@ -75,6 +77,7 @@ private:
     std::unique_ptr<input_devices_simulator::ScriptRunner> runner_;
     bool injection_enabled_ = false;
     bool settle_on_stop_ = false;
+    bool settling_ = false;
     // The bindings have seen a face since tracking (re)started, so there is
     // something to settle.
     bool saw_face_ = false;

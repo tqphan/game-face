@@ -43,6 +43,7 @@ AppController::AppController(QObject* parent)
     , profileModel_(new ProfileListModel(&profileSet_, this))
     , bindingModel_(new BindingListModel(&profileSet_, this))
     , blendshapeModel_(new BlendshapeModel(this))
+    , soundPlayer_(new SoundPlayer(this))
     , worker_(new TrackingWorker)
 {
     worker_->moveToThread(&workerThread_);
@@ -58,6 +59,9 @@ AppController::AppController(QObject* parent)
             lastCommand_ = injected ? command : tr("%1 (not sent: input simulation is off)").arg(command);
             emit lastCommandChanged();
         }, Qt::QueuedConnection);
+    };
+    worker_->onEdge = [this](game_face::BindingEngine::Edge edge) {
+        QMetaObject::invokeMethod(this, [this, edge] { soundPlayer_->play(edge); }, Qt::QueuedConnection);
     };
     worker_->onError = [this](QString message) {
         QMetaObject::invokeMethod(this, [this, message] { setStatus(message); }, Qt::QueuedConnection);
@@ -131,6 +135,7 @@ void AppController::initialize()
 
     initialized_ = true;
     sendWorkerSettings();
+    applySoundSettings();
     if (settings_->autoStartTracking)
         startTracking();
 }
@@ -372,6 +377,7 @@ void AppController::onSettingsChanged()
     if (!initialized_)
         return;
     sendWorkerSettings();
+    applySoundSettings();
     if (settings_->autoSaveSettings)
         saveSettingsTimer_.start();
 }
@@ -410,6 +416,11 @@ void AppController::sendWorkerSettings()
         w->setInjectionEnabled(enabled);
         w->setSettleOnStop(settle);
     });
+}
+
+void AppController::applySoundSettings()
+{
+    soundPlayer_->configure(settings_->startSound, settings_->stopSound, settings_->soundVolume);
 }
 
 void AppController::profileStructureChanged()
