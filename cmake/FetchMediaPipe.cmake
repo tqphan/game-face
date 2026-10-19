@@ -6,8 +6,8 @@
 # Sets:
 #   MEDIAPIPE_LIBRARY        full path to libmediapipe.{dll,so,dylib}
 #   MEDIAPIPE_RUNTIME_FILES  the libraries that ship next to the app: libmediapipe,
-#                            plus opencv_world<ver>.dll on Windows (Linux and macOS
-#                            link OpenCV statically)
+#                            plus opencv_world<ver>.dll on Windows x86_64 (Linux,
+#                            macOS and Windows arm64 link OpenCV statically)
 #   MEDIAPIPE_LICENSE_FILES  MediaPipe's and OpenCV's licenses (both Apache-2.0)
 #
 # Offline builds: set GAME_FACE_MEDIAPIPE_ZIP to a local copy of the zip (its
@@ -28,15 +28,27 @@
 #      signatures), then test tracking with the new library.
 
 set(MEDIAPIPE_VERSION v1.0.0)
-set(MEDIAPIPE_RELEASE mediapipe-v1.0.0-cb4c817)
+set(MEDIAPIPE_RELEASE mediapipe-v1.0.0-f9e8d75)
 set(_mp_base https://github.com/tqphan/libmediapipe/releases/download/${MEDIAPIPE_RELEASE})
 
 if(WIN32)
-    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|x86_64)$")
-        message(FATAL_ERROR "libmediapipe is built for x86_64 Windows only, not ${CMAKE_SYSTEM_PROCESSOR}.")
+    # CMAKE_GENERATOR_PLATFORM (Visual Studio's -A) names the target when set;
+    # CMAKE_SYSTEM_PROCESSOR is the host's.
+    if(CMAKE_GENERATOR_PLATFORM)
+        set(_mp_arch ${CMAKE_GENERATOR_PLATFORM})
+    else()
+        set(_mp_arch ${CMAKE_SYSTEM_PROCESSOR})
     endif()
-    set(_mp_platform windows-x86_64)
-    set(_mp_sha256 b85d8d40ef10281ad9c9c6f420c56cdb96b4f96f58cd6f1bb995688cd0efb4b3)
+    if(_mp_arch MATCHES "^(AMD64|x86_64|x64|X64)$")
+        set(_mp_platform windows-x86_64)
+        set(_mp_sha256 c6bfff7a51be9596ae80db6c996625f7459fe658cbed2e1c2e9390ac3dacad9b)
+    elseif(_mp_arch MATCHES "^(ARM64|arm64|aarch64)$")
+        # OpenCV is linked in, so the zip has no opencv_world DLL.
+        set(_mp_platform windows-arm64)
+        set(_mp_sha256 a57214e1211efb4dc9ee632978408877b6547ace5b337eef636b20e29f028843)
+    else()
+        message(FATAL_ERROR "libmediapipe is built for x86_64 and arm64 Windows only, not ${_mp_arch}.")
+    endif()
     set(_mp_lib libmediapipe.dll)
 elseif(APPLE)
     if(CMAKE_OSX_ARCHITECTURES AND NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
@@ -46,16 +58,21 @@ elseif(APPLE)
         message(FATAL_ERROR "libmediapipe is built for arm64 macOS only (Apple silicon), not ${CMAKE_SYSTEM_PROCESSOR}.")
     endif()
     set(_mp_platform macos-arm64)
-    set(_mp_sha256 028f27c2794c631e00fc3e50c33d0ce035da5ec36522f50c6ea28a4590c92427)
+    set(_mp_sha256 eb18f295bfe601ea053e61766b80d1e5e8bff7ebcc00b9570091b1b9ae24220a)
     set(_mp_lib libmediapipe.dylib)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
     # Built on Ubuntu 24.04, so it needs glibc 2.39 or newer.
     set(_mp_platform linux-x86_64)
-    set(_mp_sha256 6dad74544ce6c39d502fca75a9f2b73f774a4ddd46d068df785724ae32b49cf6)
+    set(_mp_sha256 729c4a75758529544c407ce2e156ebaefc96161eee5a9c043a53ac8b0aaf4779)
+    set(_mp_lib libmediapipe.so)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+    # Built on Ubuntu 24.04, so it needs glibc 2.39 or newer.
+    set(_mp_platform linux-arm64)
+    set(_mp_sha256 98abdb3e477d49b39c8a6a9df5e9c638b6e09a8d722d3ed19be742eb1dc1ee3c)
     set(_mp_lib libmediapipe.so)
 else()
-    message(FATAL_ERROR "libmediapipe is built for Windows x86_64, Linux x86_64 and macOS arm64 only, "
-                        "not ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}.")
+    message(FATAL_ERROR "libmediapipe is built for Windows (x86_64, arm64), Linux (x86_64, arm64) "
+                        "and macOS arm64 only, not ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}.")
 endif()
 
 set(_mp_zip_name libmediapipe-${MEDIAPIPE_VERSION}-${_mp_platform}.zip)
