@@ -68,7 +68,9 @@ Name: "{autoprograms}\game-face"; Filename: "{app}\bin\game-face.exe"
 Name: "{autodesktop}\game-face"; Filename: "{app}\bin\game-face.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\bin\game-face.exe"; Description: "{cm:LaunchProgram,game-face}"; Flags: nowait postinstall skipifsilent
+; shellexec: CreateProcess can't start a uiAccess exe (error 740, "requires
+; elevation"); only ShellExecute, which goes through the AppInfo service, can.
+Filename: "{app}\bin\game-face.exe"; Description: "{cm:LaunchProgram,game-face}"; Flags: shellexec nowait postinstall skipifsilent
 
 [UninstallRun]
 ; Removes exactly this certificate (by thumbprint), and only if setup added it.
