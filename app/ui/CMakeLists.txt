@@ -17,7 +17,7 @@ qt_add_qml_module(game-face
         qml/BindingCard.qml
         qml/TriggerEditor.qml
         qml/CommandField.qml
-        qml/SettingsDialog.qml
+        qml/SettingsWindow.qml
         qml/NewProfileDialog.qml
         qml/BlendshapesDialog.qml
         qml/CloseDialog.qml

@@ -5,19 +5,48 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import GameFace
 
-// Changes apply immediately; Save writes them to disk and restarts tracking
-// so new confidence thresholds take effect.
-AppDialog {
+// A modal window of its own, not a popup inside the main window. Changes
+// apply immediately; Save writes them to disk and restarts tracking so new
+// confidence thresholds take effect.
+ApplicationWindow {
     id: dialog
 
-    anchors.centerIn: Overlay.overlay
-    width: Math.min(640, Overlay.overlay ? Overlay.overlay.width - 40 : 640)
-    height: Overlay.overlay ? Overlay.overlay.height - 80 : 700
-    modal: true
+    width: 640
+    height: transientParent ? Math.min(760, transientParent.height - 80) : 700
+    minimumWidth: 400
+    minimumHeight: 300
+    flags: Qt.Dialog
+    modality: Qt.ApplicationModal
     title: qsTr("Settings")
-    standardButtons: Dialog.Save | Dialog.Close
-    footer: AppDialogButtons {}
-    onAccepted: App.saveSettings()
+
+    // A separate window doesn't inherit the main window's Material settings.
+    Material.theme: App.settings.theme === "light" ? Material.Light : Material.Dark
+    Material.accent: Material.Teal
+
+    // Centered over the main window, like the popup it replaces.
+    function open() {
+        if (transientParent) {
+            x = transientParent.x + (transientParent.width - width) / 2
+            y = transientParent.y + (transientParent.height - height) / 2
+        }
+        show()
+        raise()
+        requestActivate()
+    }
+
+    Shortcut {
+        sequences: [StandardKey.Cancel]
+        onActivated: dialog.close()
+    }
+
+    footer: AppDialogButtons {
+        standardButtons: DialogButtonBox.Save | DialogButtonBox.Close
+        onAccepted: {
+            App.saveSettings()
+            dialog.close()
+        }
+        onRejected: dialog.close()
+    }
 
     readonly property var settings: App.settings
 
@@ -44,6 +73,7 @@ AppDialog {
 
     ScrollView {
         anchors.fill: parent
+        anchors.margins: 24
         contentWidth: availableWidth
         clip: true
 

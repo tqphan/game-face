@@ -38,7 +38,7 @@ ApplicationWindow {
             Layout.preferredWidth: Math.max(340, window.width / 3)
             Layout.fillHeight: true
             onNewProfileRequested: newProfileDialog.open()
-            onSettingsRequested: settingsDialog.open()
+            onSettingsRequested: settingsWindow.open()
             onBlendshapesRequested: blendshapesDialog.open()
         }
 
@@ -49,7 +49,7 @@ ApplicationWindow {
     }
 
     NewProfileDialog { id: newProfileDialog }
-    SettingsDialog { id: settingsDialog }
+    SettingsWindow { id: settingsWindow; transientParent: window }
     BlendshapesDialog { id: blendshapesDialog }
 
     CloseDialog {
