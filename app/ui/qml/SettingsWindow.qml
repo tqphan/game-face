@@ -111,6 +111,14 @@ ApplicationWindow {
                 onToggled: dialog.settings.allowInputSimulation = checked
             }
             CheckBox {
+                text: qsTr("Run stop commands when tracking stops or the camera drops out")
+                ToolTip.visible: hovered
+                ToolTip.delay: 500
+                ToolTip.text: qsTr("Bindings run once as if every blendshape dropped to 0.")
+                checked: dialog.settings.settleOnStop
+                onToggled: dialog.settings.settleOnStop = checked
+            }
+            CheckBox {
                 text: qsTr("Start tracking when game-face opens")
                 checked: dialog.settings.autoStartTracking
                 onToggled: dialog.settings.autoStartTracking = checked

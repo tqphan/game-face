@@ -41,6 +41,10 @@ public:
 
     // time_ms must not go backwards; it only matters for debounce.
     void process(const BlendshapeScores& scores, double time_ms);
+    // Processes all-zero scores, at time_ms and again once every debounce has
+    // elapsed, as if the face relaxed completely: simple bindings send their
+    // stop command, and any trigger whose expression is true at zero fires.
+    void settle(double time_ms);
 
     std::span<const BindingStatus> status() const { return status_; }
 

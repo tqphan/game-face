@@ -26,6 +26,7 @@ class SettingsObject : public QObject {
     Q_PROPERTY(bool autoSaveProfiles MEMBER autoSaveProfiles NOTIFY changed)
     Q_PROPERTY(bool lockUi MEMBER lockUi NOTIFY changed)
     Q_PROPERTY(bool confirmOnClose MEMBER confirmOnClose NOTIFY changed)
+    Q_PROPERTY(bool settleOnStop MEMBER settleOnStop NOTIFY changed)
 
 public:
     using QObject::QObject;
@@ -47,6 +48,7 @@ public:
     bool autoSaveProfiles = false;
     bool lockUi = false;
     bool confirmOnClose = true;
+    bool settleOnStop = false;
 
     // Not shown in the UI yet, but kept so saving doesn't drop them.
     bool autoStartWithOs = false;

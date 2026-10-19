@@ -161,6 +161,34 @@ private slots:
         QCOMPARE(h.feed("jawOpen", {60}), Commands{"start"});
     }
 
+    void settleSendsStopCommands()
+    {
+        Harness h({simpleBinding("jawOpen", 50, "jaw", "jaw-up"),
+                   advancedBinding("browInnerUp > 40", "press", "browInnerUp < 40", "release", 500),
+                   simpleBinding("eyeBlinkLeft", 50, "blink", "blink-up")});
+        BlendshapeScores both{};
+        both[index("jawOpen")] = 60;
+        both[index("browInnerUp")] = 60;
+        h.engine.process(both, 0);
+        h.engine.process(both, 600);  // past the debounce
+        QCOMPARE(h.sent, (Commands{"jaw", "press"}));
+        h.sent.clear();
+        // The debounced release fires too, though no more frames will come.
+        h.engine.settle(700);
+        QCOMPARE(h.sent, (Commands{"jaw-up", "release"}));
+        QVERIFY(!h.engine.status()[0].simple_active);
+        h.sent.clear();
+        h.engine.settle(2000);
+        QCOMPARE(h.sent, Commands{});
+    }
+
+    void settleFiresTriggersTrueAtZero()
+    {
+        Harness h({advancedBinding("eyeBlinkLeft < 10", "open", "", "")});
+        h.engine.settle(0);
+        QCOMPARE(h.sent, Commands{"open"});
+    }
+
     void updateProfileKeepsState()
     {
         Harness h({simpleBinding("jawOpen", 50, "start", "stop")});

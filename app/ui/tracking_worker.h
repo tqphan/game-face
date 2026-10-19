@@ -54,6 +54,9 @@ public:
     void stop();
     void setProfile(const game_face::Profile& profile, bool keep_state);
     void setInjectionEnabled(bool enabled);
+    // When on, stop() and pause() first run the bindings as if every
+    // blendshape dropped to 0 (BindingEngine::settle).
+    void setSettleOnStop(bool enabled);
     // Releases held input and re-arms the bindings; for when frames stop.
     void pause();
     // `image` is RGB888. Frames are converted on the GUI thread: calling
@@ -64,11 +67,16 @@ public:
 private:
     void execute(const std::string& command);
     void releaseAll();
+    void settle();
 
     std::unique_ptr<game_face::FaceTracker> tracker_;
     game_face::BindingEngine engine_;
     std::unique_ptr<input_devices_simulator::Simulator> simulator_;
     std::unique_ptr<input_devices_simulator::ScriptRunner> runner_;
     bool injection_enabled_ = false;
+    bool settle_on_stop_ = false;
+    // The bindings have seen a face since tracking (re)started, so there is
+    // something to settle.
+    bool saw_face_ = false;
     QElapsedTimer clock_;
 };

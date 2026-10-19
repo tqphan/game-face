@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "list_models.h"
 #include "settings_object.h"
@@ -115,7 +115,7 @@ private:
     void profilesEdited();
     void setProfilesDirty(bool dirty);
     void sendProfileToWorker(bool keep_state);
-    void sendInjectionState();
+    void sendWorkerSettings();
     void setStatus(const QString& message);
     void setFaceFound(bool found);
     QCameraDevice chooseCamera() const;

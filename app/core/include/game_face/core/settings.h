@@ -31,6 +31,9 @@ struct Settings {
     bool auto_save_profiles = false;          // auto.save.profiles
     bool lock_ui = false;                     // lock.ui
     bool confirm_on_close = true;             // confirm.on.close (new in game-face 2)
+    // settle.on.stop (new): when tracking stops or the camera is interrupted,
+    // run the bindings once as if every blendshape dropped to 0.
+    bool settle_on_stop = false;
 };
 
 // Missing or malformed values keep their defaults; unknown keys are ignored.

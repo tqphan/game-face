@@ -16,6 +16,7 @@ void SettingsObject::load(const game_face::Settings& s)
     autoSaveProfiles = s.auto_save_profiles;
     lockUi = s.lock_ui;
     confirmOnClose = s.confirm_on_close;
+    settleOnStop = s.settle_on_stop;
     autoStartWithOs = s.auto_start_with_os;
     runOnSecureDesktop = s.run_on_secure_desktop;
     emit changed();
@@ -38,6 +39,7 @@ game_face::Settings SettingsObject::toSettings() const
     s.auto_save_profiles = autoSaveProfiles;
     s.lock_ui = lockUi;
     s.confirm_on_close = confirmOnClose;
+    s.settle_on_stop = settleOnStop;
     s.auto_start_with_os = autoStartWithOs;
     s.run_on_secure_desktop = runOnSecureDesktop;
     return s;

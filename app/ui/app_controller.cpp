@@ -1,4 +1,4 @@
-#include "app_controller.h"
+﻿#include "app_controller.h"
 
 #include <game_face/core/settings.h>
 
@@ -130,7 +130,7 @@ void AppController::initialize()
     emit profileIndexChanged();
 
     initialized_ = true;
-    sendInjectionState();
+    sendWorkerSettings();
     if (settings_->autoStartTracking)
         startTracking();
 }
@@ -371,7 +371,7 @@ void AppController::onSettingsChanged()
 {
     if (!initialized_)
         return;
-    sendInjectionState();
+    sendWorkerSettings();
     if (settings_->autoSaveSettings)
         saveSettingsTimer_.start();
 }
@@ -402,10 +402,14 @@ void AppController::sendProfileToWorker(bool keep_state)
     onWorker([w = worker_, profile = std::move(profile), keep_state] { w->setProfile(profile, keep_state); });
 }
 
-void AppController::sendInjectionState()
+void AppController::sendWorkerSettings()
 {
     const bool enabled = settings_->allowInputSimulation;
-    onWorker([w = worker_, enabled] { w->setInjectionEnabled(enabled); });
+    const bool settle = settings_->settleOnStop;
+    onWorker([w = worker_, enabled, settle] {
+        w->setInjectionEnabled(enabled);
+        w->setSettleOnStop(settle);
+    });
 }
 
 void AppController::profileStructureChanged()

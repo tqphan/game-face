@@ -36,6 +36,7 @@ QString TrackingWorker::start(const TrackerConfig& config)
 
 void TrackingWorker::stop()
 {
+    settle();
     releaseAll();
     engine_.reset();
     tracker_.reset();
@@ -71,8 +72,14 @@ void TrackingWorker::setInjectionEnabled(bool enabled)
     }
 }
 
+void TrackingWorker::setSettleOnStop(bool enabled)
+{
+    settle_on_stop_ = enabled;
+}
+
 void TrackingWorker::pause()
 {
+    settle();
     releaseAll();
     engine_.reset();
 }
@@ -96,6 +103,7 @@ void TrackingWorker::process(const QImage& image)
                 // As in the original app, bindings only see frames with a face,
                 // so keys pressed before the face was lost stay pressed.
                 engine_.process(result.scores, now);
+                saw_face_ = true;
             }
         }
     }
@@ -129,4 +137,13 @@ void TrackingWorker::releaseAll()
 {
     if (runner_)
         runner_->releaseAll();
+}
+
+// Sends each binding's stop command before releaseAll, which only releases
+// held keys and buttons.
+void TrackingWorker::settle()
+{
+    if (settle_on_stop_ && saw_face_ && clock_.isValid())
+        engine_.settle(static_cast<double>(clock_.elapsed()));
+    saw_face_ = false;
 }

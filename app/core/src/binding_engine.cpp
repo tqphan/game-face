@@ -124,6 +124,18 @@ void BindingEngine::process(const BlendshapeScores& scores, double time_ms)
     }
 }
 
+void BindingEngine::settle(double time_ms)
+{
+    double longest = 0;
+    for (const CompiledBinding& binding : bindings_)
+        longest = std::max({longest, binding.start.debounce_ms, binding.stop.debounce_ms});
+    const BlendshapeScores zero{};
+    process(zero, time_ms);
+    // Debounce needs strictly more than debounce_ms to have passed.
+    if (longest > 0)
+        process(zero, time_ms + longest + 1);
+}
+
 // Hysteresis on one blendshape. A value equal to the threshold changes nothing.
 void BindingEngine::processSimple(CompiledBinding& binding, const BlendshapeScores& scores)
 {
