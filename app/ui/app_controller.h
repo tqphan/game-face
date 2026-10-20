@@ -41,7 +41,6 @@ class AppController : public QObject {
     // Profiles changed since they were last loaded or saved.
     Q_PROPERTY(bool profilesDirty READ profilesDirty NOTIFY profilesDirtyChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
-    Q_PROPERTY(QString lastCommand READ lastCommand NOTIFY lastCommandChanged)
     Q_PROPERTY(QVariantList cameras READ cameras NOTIFY camerasChanged)
     Q_PROPERTY(QObject* videoOutput READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
     Q_PROPERTY(QString configFolder READ configFolder CONSTANT)
@@ -66,7 +65,6 @@ public:
     bool faceFound() const { return faceFound_; }
     bool profilesDirty() const { return profilesDirty_; }
     QString statusMessage() const { return statusMessage_; }
-    QString lastCommand() const { return lastCommand_; }
     QVariantList cameras() const;
     QObject* videoOutput() const { return videoOutput_; }
     void setVideoOutput(QObject* output);
@@ -94,7 +92,6 @@ signals:
     void faceFoundChanged();
     void profilesDirtyChanged();
     void statusMessageChanged();
-    void lastCommandChanged();
     void camerasChanged();
     void videoOutputChanged();
     void landmarksChanged();
@@ -160,7 +157,6 @@ private:
     bool faceFound_ = false;
     bool profilesDirty_ = false;
     QString statusMessage_;
-    QString lastCommand_;
     std::vector<game_face::Landmark> landmarks_;
     QTimer saveSettingsTimer_;
     QTimer saveProfilesTimer_;

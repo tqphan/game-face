@@ -119,12 +119,8 @@ void TrackingWorker::process(const QImage& image)
 
 void TrackingWorker::execute(const std::string& command)
 {
-    const QString text = QString::fromStdString(command);
-    if (!injection_enabled_) {
-        if (onCommand)
-            onCommand(text, false);
+    if (!injection_enabled_)
         return;
-    }
     if (!runner_) {
         if (!simulator_)
             simulator_ = std::make_unique<ids::Simulator>();
@@ -132,9 +128,7 @@ void TrackingWorker::execute(const std::string& command)
     }
     auto status = runner_->execute(command);
     if (!status && onError)
-        onError(tr("%1: %2").arg(text, QString::fromStdString(status.error().message)));
-    if (onCommand)
-        onCommand(text, status.has_value());
+        onError(tr("%1: %2").arg(QString::fromStdString(command), QString::fromStdString(status.error().message)));
 }
 
 void TrackingWorker::releaseAll()

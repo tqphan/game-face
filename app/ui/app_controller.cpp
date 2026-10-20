@@ -53,12 +53,6 @@ AppController::AppController(QObject* parent)
         QMetaObject::invokeMethod(this, [this, r = std::move(result)]() mutable { onFrameResult(std::move(r)); },
                                   Qt::QueuedConnection);
     };
-    worker_->onCommand = [this](QString command, bool injected) {
-        QMetaObject::invokeMethod(this, [this, command, injected] {
-            lastCommand_ = injected ? command : tr("%1 (not sent: input simulation is off)").arg(command);
-            emit lastCommandChanged();
-        }, Qt::QueuedConnection);
-    };
     worker_->onEdge = [this](game_face::BindingEngine::Edge edge) {
         QMetaObject::invokeMethod(this, [this, edge] { soundPlayer_->play(edge); }, Qt::QueuedConnection);
     };

@@ -46,7 +46,6 @@ public:
     ~TrackingWorker() override;
 
     std::function<void(FrameResult)> onFrame;
-    std::function<void(QString command, bool injected)> onCommand;
     std::function<void(QString message)> onError;
     // A binding's start or stop fired (for its sound); not while settling.
     std::function<void(game_face::BindingEngine::Edge edge)> onEdge;

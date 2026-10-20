@@ -151,14 +151,6 @@ Pane {
             text: App.statusMessage
         }
 
-        Label {
-            Layout.fillWidth: true
-            visible: App.tracking && App.lastCommand !== ""
-            elide: Text.ElideRight
-            opacity: 0.7
-            text: qsTr("Last command: %1").arg(App.lastCommand)
-        }
-
         // Camera preview, mirrored like a mirror (as in the original app).
         Rectangle {
             Layout.fillWidth: true
