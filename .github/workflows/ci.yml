@@ -66,7 +66,9 @@ jobs:
           key: test-assets-${{ hashFiles('cmake/FetchTestAssets.cmake') }}
 
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        # No uiAccess manifest: Windows won't start an unsigned uiAccess exe in
+        # place, and app_smoke runs it. release.yml builds with it.
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DGAME_FACE_UIACCESS=OFF
 
       - name: Build
         run: cmake --build build

@@ -33,13 +33,18 @@ add_test(NAME head_mouse_e2e COMMAND tst_head_mouse_e2e)
 set_tests_properties(head_mouse_e2e PROPERTIES LABELS headmouse-e2e)
 
 # The whole app on recorded frames, offscreen, input printed instead of sent.
-add_test(NAME app_smoke
-    COMMAND ${CMAKE_COMMAND}
-        -DGAME_FACE=$<TARGET_FILE:game-face>
-        -DFACE_RENDER=$<TARGET_FILE:face-render>
-        -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/app_smoke
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/app_smoke.cmake)
-set_tests_properties(app_smoke PROPERTIES LABELS headmouse-e2e)
+# Not with the uiAccess manifest: Windows won't start that unsigned, in place.
+if(MSVC AND GAME_FACE_UIACCESS)
+    message(STATUS "app_smoke skipped: configure with -DGAME_FACE_UIACCESS=OFF to run it")
+else()
+    add_test(NAME app_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DGAME_FACE=$<TARGET_FILE:game-face>
+            -DFACE_RENDER=$<TARGET_FILE:face-render>
+            -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/app_smoke
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/app_smoke.cmake)
+    set_tests_properties(app_smoke PROPERTIES LABELS headmouse-e2e)
+endif()
 
 # The head mouse settings page, with stand-ins for App's objects.
 find_package(Qt6 6.5 REQUIRED COMPONENTS QuickTest QuickControls2)

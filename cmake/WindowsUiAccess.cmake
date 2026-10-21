@@ -9,8 +9,13 @@
 # The release workflow extracts the embedded manifest with mt.exe and fails if
 # uiAccess="true" is missing, so a toolchain change can't silently drop it.
 
+# Windows won't start an unsigned uiAccess program from outside a secure
+# folder (such as Program Files), so builds that run the app in place, like
+# CI's app_smoke test, turn it off with -DGAME_FACE_UIACCESS=OFF.
+option(GAME_FACE_UIACCESS "Embed the uiAccess manifest in MSVC Release builds" ON)
+
 function(game_face_enable_uiaccess target)
-    if(NOT MSVC)
+    if(NOT MSVC OR NOT GAME_FACE_UIACCESS)
         return()
     endif()
 

@@ -129,11 +129,16 @@ AppController::AppController(QObject* parent)
         else
             onVideoFrame(frame);
     });
-    connect(&framePlayer_, &FramePlayer::finished, this, [] {
+    connect(&framePlayer_, &FramePlayer::finished, this, [this] {
         if (!startupOptions().quitWhenFramesEnd)
             return;
-        // Give the worker time to finish the last frame.
-        QTimer::singleShot(1000, qApp, [] { QCoreApplication::quit(); });
+        // Give the worker time to finish the last frame. Shut down first, as
+        // closing the window does: stopping tracking touches the video output,
+        // which is gone by the time quitting destroys this object.
+        QTimer::singleShot(1000, this, [this] {
+            shutdown();
+            QCoreApplication::quit();
+        });
     });
 }
 
