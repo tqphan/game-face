@@ -22,7 +22,7 @@ struct HeadMouseAxis {
     // An expression over the signal names (kSignalNames), e.g. "headYaw" or
     // "headYaw + 2 * headX". Empty turns the axis off.
     std::string source;
-    // The source's value when centred. Unset until Recenter or the first frame
+    // The source's value when centered. Unset until Recenter or the first frame
     // with a face captures it.
     std::optional<double> neutral;
     // How far the source moves from neutral, below and above it, for a full
@@ -39,7 +39,7 @@ struct HeadMouseAxis {
 struct HeadMouseGroup {
     HeadMouseMode mode = HeadMouseMode::Relative;
     // Normalised units, 0..0.9. Joystick and absolute: offsets from neutral
-    // smaller than this count as centred. Relative: how far the head must
+    // smaller than this count as centered. Relative: how far the head must
     // move before the pointer follows, which keeps tracking noise out.
     // The defaults are tuned with tools/head-mouse-bench.
     double deadzone = 0.06;
@@ -78,7 +78,7 @@ inline constexpr std::array<HeadMousePreset, 4> kHeadMousePresets = {{
 
 const HeadMousePreset* findHeadMousePreset(std::string_view id);
 // Sets the group's sources and symmetric ranges from the preset and clears
-// their neutral (a new source has a different centre).
+// their neutral (a new source has a different center).
 void applyHeadMousePreset(HeadMouseGroup& group, const HeadMousePreset& preset);
 // The preset whose sources the group uses, or empty for custom sources.
 std::string_view headMousePresetId(const HeadMouseGroup& group);

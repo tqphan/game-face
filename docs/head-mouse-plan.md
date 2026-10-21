@@ -46,7 +46,7 @@ Each axis has:
   - `headRoll`: tilting instead of turning
   - `headYaw + 2 * headX`: both at once
   - `eyeLookOutRight - eyeLookInRight`: eye direction from blendshapes
-- `neutral`: the source's value when centred. Recenter captures it for every axis.
+- `neutral`: the source's value when centered. Recenter captures it for every axis.
 - `range.negative`, `range.positive`: how far the source moves from neutral, in each direction, for a "full" deflection. They can differ, because people usually look down further than up. Each preset fills in sensible defaults (for example 20° for yaw, 4 cm for `headX`), and **Calibrate** measures them (see 6).
 - `gain`, `invert`.
 
@@ -141,7 +141,7 @@ Checks that `FaceTracker` reports the right signals, with the right signs, for r
 - **3D renders for yaw and pitch:** a flat photo can't be turned, so `tools/face-render` renders a 3D head scan with Qt Quick 3D (already in the Qt install) offscreen at any yaw, pitch, roll and position. Candidate model: the Lee Perry-Smith head scan (CC BY 3.0, as used in the three.js examples). Its license and attribution go next to the other third-party licenses.
   - **Prototype this first:** render a few poses and check that MediaPipe finds the face and that its pose matches the render. If the render doesn't look real enough to MediaPipe, fall back to a small set of real photos with labelled head angles, from a dataset whose license allows it.
   - **Result:** MediaPipe tracks the renders. `face-render` is a small CPU rasteriser (no GPU, same pixels everywhere), not Qt Quick 3D. With MediaPipe's 63° field of view and the scan at 5.5 cm per unit, the frontal render tracks at yaw/pitch/roll within 2° and 49.9 cm (set: 50). Single-axis turns of 20° measure 20–21°, pitch ±12° measures ±11°, moves of 5 cm measure 5.0 cm, and leaning in 10 cm measures 10.4 cm. Moving the head sideways also reads as about 4° of yaw (the camera sees it from an angle), which matters for the Head position preset.
-- **Robustness variants:** add camera-like noise, blur, JPEG compression, dim lighting and an off-centre face to the same images. Check that the signals stay within tolerance, and measure how much they jitter for a still head.
+- **Robustness variants:** add camera-like noise, blur, JPEG compression, dim lighting and an off-center face to the same images. Check that the signals stay within tolerance, and measure how much they jitter for a still head.
 - `tst_face_signals` runs `FaceTracker` on these images and compares the signals with the known pose, with tolerances (for example ±3° for angles). Images are generated at test time or stored small in `tests/data`; generated sequences are cached in the build directory, not committed.
 - `face-probe --image` prints all the head signals, for checking one image by hand.
 

@@ -11,10 +11,12 @@ import GameFace
 ApplicationWindow {
     id: dialog
 
-    width: 900
-    height: transientParent ? Math.min(820, transientParent.height - 80) : 760
-    minimumWidth: 640
-    minimumHeight: 420
+    // Nearly all of the main window (most of the screen when it's maximized),
+    // so large text still fits.
+    width: transientParent ? transientParent.width - 80 : 1500
+    height: transientParent ? transientParent.height - 80 : 900
+    minimumWidth: 800
+    minimumHeight: 520
     flags: Qt.Dialog
     modality: Qt.ApplicationModal
     title: qsTr("Settings")
@@ -58,7 +60,7 @@ ApplicationWindow {
         signal chosen(string sound)
         Layout.fillWidth: true
         Label {
-            Layout.preferredWidth: 90
+            Layout.preferredWidth: Math.max(90, implicitWidth)
             text: choice.label
         }
         ComboBox {
@@ -183,7 +185,7 @@ ApplicationWindow {
 
         ListView {
             id: categories
-            Layout.preferredWidth: 200
+            Layout.preferredWidth: Math.round(200 * Theme.textScale)
             Layout.fillHeight: true
             Layout.topMargin: 12
             clip: true

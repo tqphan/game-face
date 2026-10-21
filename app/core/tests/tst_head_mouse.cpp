@@ -27,7 +27,7 @@ SignalValues signalsOf(const Head& h)
     return v;
 }
 
-// Enabled, centred at 0, no smoothing: easy numbers.
+// Enabled, centered at 0, no smoothing: easy numbers.
 HeadMouseSettings plain(HeadMouseMode mode = HeadMouseMode::Relative)
 {
     HeadMouseSettings s;
@@ -151,7 +151,7 @@ private slots:
         QCOMPARE(group.y.source, std::string("headY"));
         QCOMPARE(group.x.range_negative, 5.0);
         QCOMPARE(group.x.range_positive, 5.0);
-        QVERIFY(!group.x.neutral);  // a new source has a new centre
+        QVERIFY(!group.x.neutral);  // a new source has a new center
         QCOMPARE(headMousePresetId(group), std::string_view("headPosition"));
         group.x.source = "headYaw + 2 * headX";
         QCOMPARE(headMousePresetId(group), std::string_view());
@@ -576,7 +576,7 @@ private slots:
         QVERIFY(out.absolute);
         QCOMPARE((*out.absolute)[0], 1.0);
         QCOMPARE((*out.absolute)[1], -1.0);
-        out = hm.process(signalsOf({.yaw = 0.5}), 33);  // inside the deadzone: centre
+        out = hm.process(signalsOf({.yaw = 0.5}), 33);  // inside the deadzone: center
         QCOMPARE((*out.absolute)[0], 0.0);
         QCOMPARE(out.dx, 0);
     }

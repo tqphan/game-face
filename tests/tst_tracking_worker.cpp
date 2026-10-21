@@ -57,7 +57,7 @@ private slots:
         const long dx = run.dx(), dy = run.dy();
         QVERIFY2(dx > 150, qPrintable(QString("dx %1").arg(dx)));
         QVERIFY2(std::abs(dy) < dx / 4, qPrintable(QString("dx %1 dy %2").arg(dx).arg(dy)));
-        // The first frame captured the centre, so the end is a full deflection.
+        // The first frame captured the center, so the end is a full deflection.
         const auto& last = run.frames.back().head_mouse.axes[HeadMouse::PointerX];
         QVERIFY2(std::abs(last.normalised - 1.0) < 0.25, qPrintable(QString::number(last.normalised)));
         QVERIFY(!run.settings_reports.empty());  // the captured neutral, to save
@@ -160,8 +160,8 @@ private slots:
         QVERIFY(run.errors.empty());
         QVERIFY(run.settings_reports.size() >= 2);  // first neutral, then the recenter
         const double first = *run.settings_reports.front().pointer.x.neutral;
-        const double recentred = *run.settings_reports.back().pointer.x.neutral;
-        QVERIFY2(recentred - first > 6, qPrintable(QString("%1 -> %2").arg(first).arg(recentred)));
+        const double recentered = *run.settings_reports.back().pointer.x.neutral;
+        QVERIFY2(recentered - first > 6, qPrintable(QString("%1 -> %2").arg(first).arg(recentered)));
     }
 
     // Toggling would move the pointer, so it needs input simulation.

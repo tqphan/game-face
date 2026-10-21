@@ -272,7 +272,7 @@ TargetStats aimAtTargets(const Config& c, double noise_scale)
 
                     if (c.mode == HeadMouseMode::Joystick) {
                         // Speed toward the target, slowing down near it, and
-                        // centred once on it.
+                        // centered once on it.
                         double want = 0;
                         if (std::abs(error) > width / 4) {
                             const double speed = std::clamp(error * 3.0, -rates.pointer_joystick_px_s * 0.6,

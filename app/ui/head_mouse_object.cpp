@@ -38,7 +38,7 @@ void HeadMouseAxisObject::setSource(const QString& source)
     if (source == source_)
         return;
     source_ = source;
-    // A different source has a different centre.
+    // A different source has a different center.
     hasNeutral_ = false;
     compile();
     emit changed();

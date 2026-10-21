@@ -301,7 +301,7 @@ HeadMouseOutput HeadMouse::process(const SignalValues& values, double time_ms)
         if (!axis.neutral || recenter_pending_) {
             axis.neutral = raw;
             settings_changed_ = true;
-            // A new centre: start the motion over so nothing jumps.
+            // A new center: start the motion over so nothing jumps.
             state.filter.reset();
             state.previous.reset();
             state.remainder = 0;

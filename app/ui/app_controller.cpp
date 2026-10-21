@@ -248,14 +248,14 @@ void AppController::calibrateHeadMouse()
 
 void AppController::onWorkerHeadMouseSettings(const game_face::HeadMouseSettings& settings)
 {
-    // Takes only what the worker changes itself (on/off, centres, ranges), so
+    // Takes only what the worker changes itself (on/off, centers, ranges), so
     // an edit the worker hasn't received yet isn't undone. Loading sends the
     // result back to the worker.
     game_face::HeadMouseSettings merged = settings_->headMouse()->toSettings();
     merged.enabled = settings.enabled;
     auto take = [](game_face::HeadMouseAxis& to, const game_face::HeadMouseAxis& from) {
         if (to.source != from.source)
-            return;  // the source changed since; its old centre and range don't apply
+            return;  // the source changed since; its old center and range don't apply
         to.neutral = from.neutral;
         to.range_negative = from.range_negative;
         to.range_positive = from.range_positive;

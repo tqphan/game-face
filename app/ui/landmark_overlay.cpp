@@ -93,13 +93,13 @@ void appendSegment(QSGGeometry::Point2D*& out, QPointF a, QPointF b, double widt
 }
 
 // A circle outline as line segments.
-void appendCircle(QSGGeometry::Point2D*& out, QPointF centre, double radius, double width, int segments)
+void appendCircle(QSGGeometry::Point2D*& out, QPointF center, double radius, double width, int segments)
 {
     for (int i = 0; i < segments; ++i) {
         const double a = 2 * std::numbers::pi * i / segments;
         const double b = 2 * std::numbers::pi * (i + 1) / segments;
-        appendSegment(out, centre + QPointF(std::cos(a), std::sin(a)) * radius,
-                      centre + QPointF(std::cos(b), std::sin(b)) * radius, width);
+        appendSegment(out, center + QPointF(std::cos(a), std::sin(a)) * radius,
+                      center + QPointF(std::cos(b), std::sin(b)) * radius, width);
     }
 }
 
@@ -203,18 +203,18 @@ QSGNode* LandmarkOverlay::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     auto* puck = static_cast<QSGGeometryNode*>(child->nextSibling());
     const bool showPuck = source_ && source_->showHeadMousePuck();
     const double radius = std::clamp(std::min(rect.width(), rect.height()) * 0.09, 28.0, 70.0);
-    const QPointF centre(rect.right() - radius - 14, rect.top() + radius + 14);
+    const QPointF center(rect.right() - radius - 14, rect.top() + radius + 14);
     const double deadzone = source_ ? std::clamp(source_->headMouseDeadzone(), 0.0, 0.9) : 0;
     rings->geometry()->allocate(showPuck ? 2 * kCircleSegments * kVerticesPerEdge : 0);
     if (showPuck) {
         QSGGeometry::Point2D* out = rings->geometry()->vertexDataAsPoint2D();
-        appendCircle(out, centre, radius, 1.5, kCircleSegments);
-        appendCircle(out, centre, std::max(radius * deadzone, 2.0), 1, kCircleSegments);
+        appendCircle(out, center, radius, 1.5, kCircleSegments);
+        appendCircle(out, center, std::max(radius * deadzone, 2.0), 1, kCircleSegments);
     }
     puck->geometry()->allocate(showPuck ? kDotSegments * kVerticesPerEdge : 0);
     if (showPuck) {
         const QPointF n = source_->headMousePuck();
-        const QPointF at = centre + QPointF(std::clamp(n.x(), -1.0, 1.0), -std::clamp(n.y(), -1.0, 1.0)) * radius;
+        const QPointF at = center + QPointF(std::clamp(n.x(), -1.0, 1.0), -std::clamp(n.y(), -1.0, 1.0)) * radius;
         QSGGeometry::Point2D* out = puck->geometry()->vertexDataAsPoint2D();
         appendCircle(out, at, 3, 6, kDotSegments);  // a filled dot: a thick ring around a tiny hole
     }

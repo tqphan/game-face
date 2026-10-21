@@ -186,7 +186,7 @@ void TrackingWorker::applyHeadMouse(const game_face::HeadMouseOutput& output)
     ids::Status status;
     if (output.absolute) {
         if (screen_.isValid()) {
-            // -1..1 from the centre, up positive; screen y grows downward.
+            // -1..1 from the center, up positive; screen y grows downward.
             const double half_w = (screen_.width() - 1) / 2.0;
             const double half_h = (screen_.height() - 1) / 2.0;
             const int x = static_cast<int>(std::lround(screen_.x() + half_w + (*output.absolute)[0] * half_w));

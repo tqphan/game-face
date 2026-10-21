@@ -120,7 +120,7 @@ public:
     Q_INVOKABLE void addBinding();
     Q_INVOKABLE void removeBinding(int row);
     Q_INVOKABLE void previewSound(const QString& name) { soundPlayer_->preview(name); }
-    // Captures the current head position as the head mouse's centre (on the
+    // Captures the current head position as the head mouse's center (on the
     // next frame with a face).
     Q_INVOKABLE void recenterHeadMouse();
     // Measures the head mouse ranges over the next few seconds.

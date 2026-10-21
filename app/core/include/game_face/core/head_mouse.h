@@ -57,7 +57,7 @@ struct HeadMouseOutput {
     int scroll_x = 0;
     int scroll_y = 0;
     // Absolute mode: where the pointer should be, -1..1 on each axis from the
-    // screen's centre (X right, Y up). Not set in other modes.
+    // screen's center (X right, Y up). Not set in other modes.
     std::optional<std::array<double, 2>> absolute;
 
     // Live readout, indexed pointer X, pointer Y, scroll X, scroll Y.

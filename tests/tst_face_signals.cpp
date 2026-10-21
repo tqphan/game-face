@@ -62,7 +62,7 @@ QString describe(const Delta& d)
         .arg(d.nose_x, 0, 'f', 3).arg(d.nose_y, 0, 'f', 3);
 }
 
-// The same image moved, turned or scaled about its centre, on a grey canvas
+// The same image moved, turned or scaled about its center, on a grey canvas
 // the same size.
 QImage transformed(const QImage& image, double rotate_deg, QPointF shift, double scale)
 {

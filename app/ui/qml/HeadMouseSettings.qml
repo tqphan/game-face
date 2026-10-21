@@ -20,7 +20,7 @@ ColumnLayout {
     signal recenterRequested()
     signal calibrateRequested()
 
-    spacing: 8
+    spacing: 16
 
     function reading(index) {
         return page.readings && page.readings.length > index ? page.readings[index] : ({})
@@ -52,7 +52,7 @@ ColumnLayout {
             onClicked: page.recenterRequested()
             ToolTip.visible: hovered
             ToolTip.delay: 500
-            ToolTip.text: qsTr("Use the head's current position as the centre.")
+            ToolTip.text: qsTr("Use the head's current position as the center.")
         }
         Button {
             objectName: "calibrate"
@@ -82,6 +82,7 @@ ColumnLayout {
     TabBar {
         id: groups
         Layout.fillWidth: true
+        Layout.topMargin: 12
         TabButton { text: qsTr("Pointer") }
         TabButton { text: qsTr("Scroll") }
     }
@@ -115,6 +116,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
+        Layout.topMargin: 12
         Label {
             text: qsTr("Hold still after a click: %1 ms").arg(Math.round(page.headMouse.clickFreezeMs))
             Layout.preferredWidth: Math.max(220, implicitWidth)
@@ -153,7 +155,7 @@ ColumnLayout {
         property var xReading: ({})
         property var yReading: ({})
         property int smallTextSize: 12
-        spacing: 8
+        spacing: 16
 
         RowLayout {
             Layout.fillWidth: true
@@ -195,7 +197,7 @@ ColumnLayout {
             opacity: 0.7
             font.pixelSize: editor.smallTextSize
             text: editor.group.mode === "joystick"
-                  ? qsTr("Joystick: hold your head away from the centre and the movement keeps going.")
+                  ? qsTr("Joystick: hold your head away from the center and the movement keeps going.")
                   : editor.group.mode === "absolute"
                     ? qsTr("Absolute: where your head points is where the pointer goes. Desktop only; games ignore it.")
                     : qsTr("Relative: the movement follows your head, like a trackpad.")
@@ -235,6 +237,7 @@ ColumnLayout {
 
         HeadMouseAxisEditor {
             objectName: "xAxis"
+            Layout.topMargin: 12
             axis: editor.group.x
             label: editor.isPointer ? qsTr("Left and right") : qsTr("Scroll sideways")
             reading: editor.xReading
@@ -243,6 +246,7 @@ ColumnLayout {
         }
         HeadMouseAxisEditor {
             objectName: "yAxis"
+            Layout.topMargin: 20
             axis: editor.group.y
             label: editor.isPointer ? qsTr("Up and down") : qsTr("Scroll up and down")
             reading: editor.yReading

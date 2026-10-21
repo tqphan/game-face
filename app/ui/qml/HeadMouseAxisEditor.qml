@@ -15,7 +15,7 @@ ColumnLayout {
     property bool locked: false
     property int smallTextSize: 12
 
-    spacing: 4
+    spacing: 10
     Layout.fillWidth: true
 
     Label {
@@ -71,7 +71,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        Label { text: qsTr("Range below centre") }
+        Label { text: qsTr("Range below center") }
         TextField {
             objectName: "rangeNegative"
             Layout.preferredWidth: 100
@@ -93,7 +93,7 @@ ColumnLayout {
         Item { Layout.fillWidth: true }
     }
 
-    // Live: the source's value, its centre, and how far along the range it is.
+    // Live: the source's value, its center, and how far along the range it is.
     RowLayout {
         Layout.fillWidth: true
         Label {
@@ -103,11 +103,11 @@ ColumnLayout {
             font.pixelSize: editor.smallTextSize
             text: !editor.reading || !editor.reading.active
                   ? qsTr("No reading")
-                  : qsTr("Now %1, centre %2")
+                  : qsTr("Now %1, center %2")
                         .arg(Number(editor.reading.raw).toFixed(2))
                         .arg(editor.axis.hasNeutral ? Number(editor.axis.neutral).toFixed(2) : qsTr("not set"))
         }
-        // -1 .. 1, centre in the middle.
+        // -1 .. 1, center in the middle.
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 8
