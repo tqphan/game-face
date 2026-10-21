@@ -35,7 +35,11 @@ std::string DynamicLibrary::open(const std::filesystem::path& path)
         return {};
     return "LoadLibrary failed with error " + std::to_string(GetLastError());
 #else
-    handle_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
+    // RTLD_NODELETE keeps it mapped after dlclose: libmediapipe registers
+    // thread-local destructors on the threads that use it, which run when
+    // those threads exit, after the tracker (and its handle) may be gone.
+    // Unmapped, they crash; CI's app_smoke hit this on Linux.
+    handle_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
     if (handle_)
         return {};
     const char* error = dlerror();
