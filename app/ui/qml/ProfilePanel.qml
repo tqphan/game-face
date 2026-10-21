@@ -50,8 +50,9 @@ Pane {
                 Layout.fillWidth: true
                 // Highlighted while there are unsaved changes; a failed save
                 // keeps it that way and reports the error in the status line.
-                text: App.profilesDirty ? qsTr("Save profiles •") : qsTr("Saved")
+                text: App.profilesDirty ? qsTr("Save profiles") : qsTr("Saved")
                 highlighted: App.profilesDirty
+                Material.accent: Theme.primaryButton
                 enabled: App.profilesDirty
                 onClicked: App.saveProfiles()
             }
