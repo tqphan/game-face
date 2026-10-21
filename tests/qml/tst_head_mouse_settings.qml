@@ -71,7 +71,6 @@ Item {
         width: root.width
         headMouse: mock
         presets: root.presetList
-        headSignalNames: ["headYaw", "headPitch", "headRoll", "headX", "headY", "headZ", "noseX", "noseY"]
         tracking: true
     }
 

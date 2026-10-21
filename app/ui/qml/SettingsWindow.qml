@@ -190,7 +190,7 @@ ApplicationWindow {
             Layout.topMargin: 12
             clip: true
             model: [qsTr("General"), qsTr("Camera"), qsTr("Input"), qsTr("Head mouse"), qsTr("Sounds"),
-                    qsTr("Display")]
+                    qsTr("Display"), qsTr("Notes")]
             delegate: ItemDelegate {
                 required property int index
                 required property string modelData
@@ -316,7 +316,6 @@ ApplicationWindow {
                     locked: dialog.settings.lockUi
                     tracking: App.tracking
                     presets: App.headMousePresets
-                    headSignalNames: App.headSignalNames
                     smallTextSize: Theme.smallTextSize
                     onRecenterRequested: App.recenterHeadMouse()
                     onCalibrateRequested: App.calibrateHeadMouse()
@@ -436,6 +435,52 @@ ApplicationWindow {
                 AppButton {
                     text: qsTr("Reset face mesh style")
                     onClicked: dialog.settings.resetMeshStyle()
+                }
+            }
+
+            // Notes
+            SettingsPage {
+                component Note: Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+                component Heading: Label {
+                    font.bold: true
+                    Layout.topMargin: 12
+                }
+
+                Heading { text: qsTr("Head mouse"); Layout.topMargin: 0 }
+                Note {
+                    text: qsTr("The head mouse only moves the pointer while \"Allow input simulation\" (Input) is on.")
+                }
+                Note {
+                    text: qsTr("Start tracking to see live readings, recenter or calibrate.")
+                }
+                Note {
+                    text: qsTr("Bindings can control it with headmouse.toggle(), headmouse.enable(), "
+                               + "headmouse.disable(), headmouse.hold() and headmouse.release() (a clutch), "
+                               + "headmouse.recenter() and headmouse.calibrate(). Each must be the binding's "
+                               + "whole command.")
+                }
+
+                Heading { text: qsTr("Modes") }
+                Note { text: qsTr("Relative: the movement follows your head, like a trackpad.") }
+                Note { text: qsTr("Joystick: hold your head away from the center and the movement keeps going.") }
+                Note {
+                    text: qsTr("Absolute: where your head points is where the pointer goes. Desktop only; "
+                               + "games ignore it.")
+                }
+
+                Heading { text: qsTr("Sources") }
+                Note {
+                    text: qsTr("Sources can use %1 and any blendshape, with arithmetic, e.g. headYaw + 2 * headX.")
+                              .arg(App.headSignalNames.join(", "))
+                }
+
+                Heading { text: qsTr("Windows") }
+                Note {
+                    text: qsTr("\"Enhance pointer precision\" (Mouse settings) changes how far relative movement "
+                               + "goes. Turn it off for consistent movement.")
                 }
             }
         }

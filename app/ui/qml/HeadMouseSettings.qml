@@ -14,7 +14,6 @@ ColumnLayout {
     property bool locked: false
     property bool tracking: false
     property var presets: []            // App.headMousePresets
-    property var headSignalNames: []
     property int smallTextSize: 12
 
     signal recenterRequested()
@@ -32,15 +31,6 @@ ColumnLayout {
         checked: page.headMouse.enabled
         enabled: !page.locked
         onToggled: page.headMouse.enabled = checked
-    }
-    Label {
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        opacity: 0.7
-        font.pixelSize: page.smallTextSize
-        text: qsTr("Needs \"Allow input simulation\" (Input). Bindings can also use headmouse.toggle(), "
-                   + "headmouse.hold() / headmouse.release() (a clutch), headmouse.recenter() and "
-                   + "headmouse.calibrate(), each as the binding's whole command.")
     }
 
     RowLayout {
@@ -67,16 +57,8 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: page.calibrating
         wrapMode: Text.WordWrap
-        text: qsTr("For the next 5 seconds, move your head as far as is comfortable in every direction "
-                   + "you use. The mouse doesn't move meanwhile.")
+        text: qsTr("Calibrating: move your head as far as is comfortable each way.")
         color: Material.accentColor
-    }
-    Label {
-        Layout.fillWidth: true
-        visible: !page.tracking
-        wrapMode: Text.WordWrap
-        opacity: 0.7
-        text: qsTr("Start tracking to see live readings, recenter or calibrate.")
     }
 
     TabBar {
@@ -133,18 +115,6 @@ ColumnLayout {
         }
     }
 
-    Label {
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        opacity: 0.6
-        font.pixelSize: page.smallTextSize
-        text: qsTr("Sources can use %1 and any blendshape, with arithmetic, e.g. headYaw + 2 * headX.")
-                  .arg(page.headSignalNames.join(", "))
-              + (Qt.platform.os === "windows"
-                 ? " " + qsTr("On Windows, \"Enhance pointer precision\" (Mouse settings) changes how far "
-                              + "relative movement goes; turn it off for consistent movement.")
-                 : "")
-    }
 
     component GroupEditor: ColumnLayout {
         id: editor
@@ -190,17 +160,6 @@ ColumnLayout {
                 enabled: !editor.locked
                 onActivated: editor.group.mode = currentValue
             }
-        }
-        Label {
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-            opacity: 0.7
-            font.pixelSize: editor.smallTextSize
-            text: editor.group.mode === "joystick"
-                  ? qsTr("Joystick: hold your head away from the center and the movement keeps going.")
-                  : editor.group.mode === "absolute"
-                    ? qsTr("Absolute: where your head points is where the pointer goes. Desktop only; games ignore it.")
-                    : qsTr("Relative: the movement follows your head, like a trackpad.")
         }
 
         RowLayout {
