@@ -6,6 +6,7 @@
 //                                              strongest blendshapes each second
 
 #include <game_face/core/face_tracker.h>
+#include <game_face/core/signals.h>
 
 #include <QCamera>
 #include <QCameraDevice>
@@ -43,6 +44,22 @@ void printTop(const game_face::FaceFrame& frame, int count)
     std::ranges::sort(shapes, [](const auto& a, const auto& b) { return a.score > b.score; });
     for (int i = 0; i < count && i < static_cast<int>(shapes.size()); ++i)
         std::printf("  %-20s %3d\n", shapes[i].name.c_str(), static_cast<int>(shapes[i].score * 100 + 0.5f));
+}
+
+// The head signals (kHeadSignalNames): pose from the transformation matrix,
+// nose position from the landmarks.
+void printHeadSignals(const game_face::FaceFrame& frame)
+{
+    if (!frame.face_found)
+        return;
+    const auto values = game_face::toSignals(frame);
+    std::printf("  head:");
+    for (std::size_t i = 0; i < game_face::kHeadSignalNames.size(); ++i) {
+        const auto name = game_face::kHeadSignalNames[i];
+        std::printf(" %.*s=%.2f", static_cast<int>(name.size()), name.data(),
+                    values[game_face::kHeadSignalOffset + i]);
+    }
+    std::printf("%s\n", frame.pose ? "" : " (no pose)");
 }
 
 std::unique_ptr<game_face::FaceTracker> makeTracker(const QCommandLineParser& args,
@@ -98,6 +115,7 @@ int runImage(const QCommandLineParser& args)
                 frame->face_found ? "face found" : "no face",
                 frame->landmarks.size(), frame->blendshapes.size(),
                 static_cast<long long>(timer.elapsed()));
+    printHeadSignals(*frame);
     printTop(*frame, 10);
     return frame->face_found ? 0 : 2;
 }
@@ -163,6 +181,7 @@ int runCamera(QGuiApplication& app, const QCommandLineParser& args)
     QObject::connect(&report, &QTimer::timeout, &app, [&] {
         std::printf("%d fps, %.1f ms/detect\n", processed,
                     processed ? static_cast<double>(detect_ms) / processed : 0.0);
+        printHeadSignals(latest);
         printTop(latest, kTopBlendshapes);
         std::fflush(stdout);
         processed = 0;

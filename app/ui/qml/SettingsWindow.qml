@@ -22,6 +22,7 @@ ApplicationWindow {
     // A separate window doesn't inherit the main window's Material settings.
     Material.theme: App.settings.theme === "light" ? Material.Light : Material.Dark
     Material.accent: Material.Teal
+    font.pixelSize: Theme.textSize
 
     // Centered over the main window, like the popup it replaces.
     function open() {
@@ -186,7 +187,8 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.topMargin: 12
             clip: true
-            model: [qsTr("General"), qsTr("Camera"), qsTr("Input"), qsTr("Sounds"), qsTr("Display")]
+            model: [qsTr("General"), qsTr("Camera"), qsTr("Input"), qsTr("Head mouse"), qsTr("Sounds"),
+                    qsTr("Display")]
             delegate: ItemDelegate {
                 required property int index
                 required property string modelData
@@ -245,7 +247,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     opacity: 0.6
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.smallTextSize
                     text: qsTr("Settings are stored in %1").arg(App.configFolder)
                 }
             }
@@ -280,7 +282,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     opacity: 0.6
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.smallTextSize
                     text: qsTr("New confidence values take effect when you click Save, which restarts tracking.")
                 }
             }
@@ -299,6 +301,23 @@ ApplicationWindow {
                     ToolTip.text: qsTr("Bindings run once as if every blendshape dropped to 0.")
                     checked: dialog.settings.settleOnStop
                     onToggled: dialog.settings.settleOnStop = checked
+                }
+            }
+
+            // Head mouse
+            SettingsPage {
+                HeadMouseSettings {
+                    Layout.fillWidth: true
+                    headMouse: dialog.settings.headMouse
+                    readings: App.headMouseAxes
+                    calibrating: App.headMouseCalibrating
+                    locked: dialog.settings.lockUi
+                    tracking: App.tracking
+                    presets: App.headMousePresets
+                    headSignalNames: App.headSignalNames
+                    smallTextSize: Theme.smallTextSize
+                    onRecenterRequested: App.recenterHeadMouse()
+                    onCalibrateRequested: App.calibrateHeadMouse()
                 }
             }
 
@@ -329,6 +348,15 @@ ApplicationWindow {
 
             // Display
             SettingsPage {
+                LabeledSlider {
+                    label: qsTr("Text size")
+                    from: 1
+                    to: 2
+                    stepSize: 0.05
+                    unit: "×"
+                    value: dialog.settings.textScale
+                    onMoved: (v) => dialog.settings.textScale = v
+                }
                 LabeledSlider {
                     label: qsTr("Webcam opacity")
                     value: dialog.settings.webcamOpacity

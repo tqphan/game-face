@@ -1,8 +1,13 @@
 #include "app_controller.h"
 
 #include <game_face/core/settings.h>
+#include <game_face/core/signals.h>
+
+#include <input_devices_simulator/recording_platform.h>
 
 #include <QCameraDevice>
+#include <QGuiApplication>
+#include <QScreen>
 
 #include <algorithm>
 #include <QCoreApplication>
@@ -34,7 +39,36 @@ std::filesystem::path toPath(const QString& path)
     return std::filesystem::path(path.toStdU16String());
 }
 
+StartupOptions& startupOptions()
+{
+    static StartupOptions options;
+    return options;
+}
+
+TrackingWorker::PlatformFactory inputPlatform()
+{
+    if (!startupOptions().recordingInput)
+        return {};
+    // Each event as a line on stdout, e.g. "input: mouse moveBy 5 -3".
+    return [] {
+        return std::make_unique<input_devices_simulator::RecordingPlatform>([](std::string_view line) {
+            std::printf("input: %.*s\n", static_cast<int>(line.size()), line.data());
+            std::fflush(stdout);
+        });
+    };
+}
+
+QString fromView(std::string_view s)
+{
+    return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
+}
+
 } // namespace
+
+void AppController::setStartupOptions(const StartupOptions& options)
+{
+    startupOptions() = options;
+}
 
 AppController::AppController(QObject* parent)
     : QObject(parent)
@@ -43,7 +77,7 @@ AppController::AppController(QObject* parent)
     , bindingModel_(new BindingListModel(&profileSet_, this))
     , blendshapeModel_(new BlendshapeModel(this))
     , soundPlayer_(new SoundPlayer(this))
-    , worker_(new TrackingWorker)
+    , worker_(new TrackingWorker(inputPlatform()))
 {
     worker_->moveToThread(&workerThread_);
     connect(&workerThread_, &QThread::finished, worker_, &QObject::deleteLater);
@@ -58,6 +92,10 @@ AppController::AppController(QObject* parent)
     };
     worker_->onError = [this](QString message) {
         QMetaObject::invokeMethod(this, [this, message] { setStatus(message); }, Qt::QueuedConnection);
+    };
+    worker_->onHeadMouseSettings = [this](game_face::HeadMouseSettings settings) {
+        QMetaObject::invokeMethod(this, [this, settings] { onWorkerHeadMouseSettings(settings); },
+                                  Qt::QueuedConnection);
     };
     workerThread_.setObjectName("tracking");
     workerThread_.start();
@@ -82,6 +120,21 @@ AppController::AppController(QObject* parent)
             [this] { cameraFailed(tr("The camera stopped sending video.")); });
     retryTimer_.setSingleShot(true);
     connect(&retryTimer_, &QTimer::timeout, this, &AppController::retryCamera);
+
+    // Recorded frames go through the preview's sink like camera frames, so
+    // they're shown and tracked the same way.
+    connect(&framePlayer_, &FramePlayer::frameReady, this, [this](const QVideoFrame& frame) {
+        if (QVideoSink* sink = session_.videoSink())
+            sink->setVideoFrame(frame);
+        else
+            onVideoFrame(frame);
+    });
+    connect(&framePlayer_, &FramePlayer::finished, this, [] {
+        if (!startupOptions().quitWhenFramesEnd)
+            return;
+        // Give the worker time to finish the last frame.
+        QTimer::singleShot(1000, qApp, [] { QCoreApplication::quit(); });
+    });
 }
 
 AppController::~AppController()
@@ -98,6 +151,8 @@ std::filesystem::path AppController::configFile(const char* name) const
 
 QString AppController::configFolder() const
 {
+    if (!startupOptions().configFolder.isEmpty())
+        return startupOptions().configFolder;
     return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
 }
 
@@ -129,8 +184,103 @@ void AppController::initialize()
     initialized_ = true;
     sendWorkerSettings();
     applySoundSettings();
-    if (settings_->autoStartTracking)
+    if (settings_->autoStartTracking || startupOptions().startTracking)
         startTracking();
+}
+
+QStringList AppController::signalNames() const
+{
+    QStringList names;
+    for (auto name : game_face::kSignalNames)
+        names << fromView(name);
+    return names;
+}
+
+QStringList AppController::headSignalNames() const
+{
+    QStringList names;
+    for (auto name : game_face::kHeadSignalNames)
+        names << fromView(name);
+    return names;
+}
+
+QVariantList AppController::headMousePresets() const
+{
+    QVariantList list;
+    for (const auto& preset : game_face::kHeadMousePresets) {
+        const QString id = fromView(preset.id);
+        QString name;
+        if (id == QLatin1String("headTurn"))
+            name = tr("Head turn");
+        else if (id == QLatin1String("headPosition"))
+            name = tr("Head position");
+        else if (id == QLatin1String("nosePoint"))
+            name = tr("Nose point");
+        else if (id == QLatin1String("tiltAndNod"))
+            name = tr("Tilt and nod");
+        list << QVariantMap{{"id", id}, {"name", name}, {"x", fromView(preset.x_source)},
+                            {"y", fromView(preset.y_source)}};
+    }
+    return list;
+}
+
+double AppController::headMouseDeadzone() const
+{
+    return settings_->headMouse()->pointer()->deadzone;
+}
+
+bool AppController::showHeadMousePuck() const
+{
+    if (!settings_->headMouse()->enabled || !faceFound_ || headMouseAxes_.size() < 2)
+        return false;
+    return headMouseAxes_[0].toMap().value("active").toBool() || headMouseAxes_[1].toMap().value("active").toBool();
+}
+
+void AppController::recenterHeadMouse()
+{
+    onWorker([w = worker_] { w->recenterHeadMouse(); });
+}
+
+void AppController::calibrateHeadMouse()
+{
+    onWorker([w = worker_] { w->calibrateHeadMouse(); });
+}
+
+void AppController::onWorkerHeadMouseSettings(const game_face::HeadMouseSettings& settings)
+{
+    // Takes only what the worker changes itself (on/off, centres, ranges), so
+    // an edit the worker hasn't received yet isn't undone. Loading sends the
+    // result back to the worker.
+    game_face::HeadMouseSettings merged = settings_->headMouse()->toSettings();
+    merged.enabled = settings.enabled;
+    auto take = [](game_face::HeadMouseAxis& to, const game_face::HeadMouseAxis& from) {
+        if (to.source != from.source)
+            return;  // the source changed since; its old centre and range don't apply
+        to.neutral = from.neutral;
+        to.range_negative = from.range_negative;
+        to.range_positive = from.range_positive;
+    };
+    take(merged.pointer.x, settings.pointer.x);
+    take(merged.pointer.y, settings.pointer.y);
+    take(merged.scroll.x, settings.scroll.x);
+    take(merged.scroll.y, settings.scroll.y);
+    settings_->headMouse()->load(merged);
+    saveHeadMouseSettings();
+}
+
+void AppController::saveHeadMouseSettings()
+{
+    const auto path = configFile("settings.json");
+    game_face::Settings saved = settings_->toSettings();
+    if (std::filesystem::exists(path)) {
+        auto loaded = game_face::loadSettings(path);
+        if (loaded)
+            saved = std::move(*loaded);
+    }
+    saved.head_mouse = settings_->headMouse()->toSettings();
+    auto written = game_face::saveSettings(saved, path);
+    if (!written)
+        setStatus(QString::fromStdString(written.error().message));
 }
 
 QStringList AppController::blendshapeNames() const
@@ -195,8 +345,9 @@ void AppController::startTracking()
 {
     if (tracking_)
         return;
-    const QCameraDevice device = chooseCamera();
-    if (device.isNull()) {
+    const bool useFrames = !startupOptions().frames.isEmpty();
+    const QCameraDevice device = useFrames ? QCameraDevice() : chooseCamera();
+    if (!useFrames && device.isNull()) {
         setStatus(tr("No camera found."));
         return;
     }
@@ -230,11 +381,25 @@ void AppController::startTracking()
 
     // Set first: opening the camera can report an error, which needs tracking on.
     tracking_ = true;
-    cameraId_ = device.id();
     retryDelayMs_ = kFirstRetryMs;
     setStatus({});
-    openCamera(device);
+    if (useFrames) {
+        startFrames();
+    } else {
+        cameraId_ = device.id();
+        openCamera(device);
+    }
     emit trackingChanged();
+}
+
+void AppController::startFrames()
+{
+    const QString error = framePlayer_.open(startupOptions().frames, startupOptions().framesFps);
+    if (!error.isEmpty()) {
+        setStatus(error);
+        return;
+    }
+    framePlayer_.start();
 }
 
 void AppController::stopTracking()
@@ -248,6 +413,7 @@ void AppController::stopTracking()
         setStatus({});
     }
     closeCamera();
+    framePlayer_.stop();
     onWorker([w = worker_] { w->stop(); });
     clearLiveState();
     emit trackingChanged();
@@ -282,7 +448,8 @@ void AppController::closeCamera()
 
 void AppController::cameraFailed(const QString& reason)
 {
-    if (!tracking_)
+    // Recorded frames have no camera to recover; they just end.
+    if (!tracking_ || !startupOptions().frames.isEmpty())
         return;
     closeCamera();
     if (!recovering_) {
@@ -316,7 +483,11 @@ void AppController::clearLiveState()
     setFaceFound(false);
     bindingModel_->clearLiveState();
     blendshapeModel_->setScores({});
+    headMouseAxes_.clear();
+    headMouseCalibrating_ = false;
+    headMousePuck_ = {};
     emit landmarksChanged();
+    emit headMouseChanged();
 }
 
 void AppController::onVideoFrame(const QVideoFrame& frame)
@@ -362,7 +533,14 @@ void AppController::onFrameResult(FrameResult result)
         landmarks_.clear();
     }
     bindingModel_->setLiveState(result.status, result.scores);
+
+    headMouseAxes_.clear();
+    for (const auto& axis : result.head_mouse.axes)
+        headMouseAxes_ << QVariantMap{{"active", axis.active}, {"raw", axis.raw}, {"normalised", axis.normalised}};
+    headMouseCalibrating_ = result.head_mouse_calibrating;
+    headMousePuck_ = QPointF(result.head_mouse.axes[0].normalised, result.head_mouse.axes[1].normalised);
     emit landmarksChanged();
+    emit headMouseChanged();
 }
 
 void AppController::onSettingsChanged()
@@ -405,9 +583,20 @@ void AppController::sendWorkerSettings()
 {
     const bool enabled = settings_->allowInputSimulation;
     const bool settle = settings_->settleOnStop;
-    onWorker([w = worker_, enabled, settle] {
+    const game_face::HeadMouseSettings headMouse = settings_->headMouse()->toSettings();
+    // Absolute mode's screen, in physical pixels like the simulator's.
+    QRect screen;
+    if (const QScreen* primary = QGuiApplication::primaryScreen()) {
+        const QRect g = primary->geometry();
+        const double ratio = primary->devicePixelRatio();
+        screen = QRect(qRound(g.x() * ratio), qRound(g.y() * ratio), qRound(g.width() * ratio),
+                       qRound(g.height() * ratio));
+    }
+    onWorker([w = worker_, enabled, settle, headMouse, screen] {
         w->setInjectionEnabled(enabled);
         w->setSettleOnStop(settle);
+        w->setHeadMouseSettings(headMouse);
+        w->setScreenGeometry(screen);
     });
 }
 

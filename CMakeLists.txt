@@ -23,6 +23,13 @@ endif()
 # The face landmarker model shipped with the Python app, reused as-is.
 set(GAME_FACE_FACE_MODEL ${PROJECT_SOURCE_DIR}/assets/face_landmarker.task)
 include(FetchMediaPipe)
+# The 3D head and images the tracking tests and tools use; not needed to
+# build the app.
+if(GAME_FACE_BUILD_TESTS)
+    include(FetchTestAssets)
+else()
+    set(GAME_FACE_TEST_ASSETS_DIR ${CMAKE_BINARY_DIR}/_deps/test-assets)
+endif()
 
 # Keyboard/mouse injection. A checkout next to this one is used when present
 # (turn off IDS_USE_SIBLING to ignore it); otherwise the pinned commit is fetched
@@ -53,3 +60,8 @@ FetchContent_MakeAvailable(input_devices_simulator)
 add_subdirectory(app/core)
 add_subdirectory(app/ui)
 add_subdirectory(tools/face-probe)
+add_subdirectory(tools/face-render)
+add_subdirectory(tools/head-mouse-bench)
+if(GAME_FACE_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

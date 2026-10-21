@@ -3,6 +3,7 @@
 #include "blendshapes.h"
 #include "expression.h"
 #include "profiles.h"
+#include "signals.h"
 
 #include <functional>
 #include <optional>
@@ -22,8 +23,9 @@ struct BindingStatus {
 };
 
 // Turns blendshape scores into commands, following the original app's rules
-// frame by frame. Commands go to `sink`; the engine injects nothing itself.
-// Not thread-safe.
+// frame by frame. Advanced expressions can also use the head signals
+// (kHeadSignalNames), e.g. "headRoll > 15". Commands go to `sink`; the engine
+// injects nothing itself. Not thread-safe.
 class BindingEngine {
 public:
     using CommandSink = std::function<void(const std::string& command)>;
@@ -45,7 +47,9 @@ public:
     void reset();
 
     // time_ms must not go backwards; it only matters for debounce.
-    void process(const BlendshapeScores& scores, double time_ms);
+    void process(const SignalValues& values, double time_ms);
+    // Blendshapes only; the head signals are 0.
+    void process(const BlendshapeScores& scores, double time_ms) { process(toSignals(scores), time_ms); }
     // Processes all-zero scores, at time_ms and again once every debounce has
     // elapsed, as if the face relaxed completely: simple bindings send their
     // stop command, and any trigger whose expression is true at zero fires.
@@ -76,8 +80,8 @@ private:
 
     void compileProfile(const Profile& profile);
     void updateStatus(std::size_t index);
-    void processSimple(CompiledBinding& binding, const BlendshapeScores& scores);
-    void processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms, Edge edge);
+    void processSimple(CompiledBinding& binding, const SignalValues& values);
+    void processTrigger(CompiledTrigger& trigger, const SignalValues& values, double time_ms, Edge edge);
     void fire(const std::string& command, Edge edge);
     void resetBinding(CompiledBinding& binding);
 

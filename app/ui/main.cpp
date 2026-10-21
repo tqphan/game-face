@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QCommandLineParser>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QPointerEvent>
@@ -93,6 +94,29 @@ int main(int argc, char** argv)
     QGuiApplication::setApplicationVersion(GAME_FACE_VERSION);
     QGuiApplication::setWindowIcon(QIcon(":/game-face/icon.png"));
     QQuickStyle::setStyle("Material");
+
+    // Options for running the app on recorded frames without a camera or
+    // real input (docs/head-mouse-plan.md, 8.3).
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addOptions({
+        {"frames", "Play these frames instead of the camera: an image folder or a video file.", "path"},
+        {"frames-fps", "Frame rate for an image folder (default: its fps.txt, or 30).", "fps"},
+        {"quit-when-frames-end", "Quit after the last frame."},
+        {"start-tracking", "Start tracking at startup."},
+        {"config", "Folder for settings and profiles (default: the user's).", "dir"},
+        {"recording-input", "Print input as text on stdout instead of sending it."},
+    });
+    parser.process(app);
+    StartupOptions options;
+    options.frames = parser.value("frames");
+    options.framesFps = parser.value("frames-fps").toDouble();
+    options.quitWhenFramesEnd = parser.isSet("quit-when-frames-end");
+    options.startTracking = parser.isSet("start-tracking");
+    options.configFolder = parser.value("config");
+    options.recordingInput = parser.isSet("recording-input");
+    AppController::setStartupOptions(options);
 
     QQmlApplicationEngine engine;
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,

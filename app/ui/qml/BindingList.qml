@@ -39,7 +39,7 @@ ColumnLayout {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.WordWrap
-        font.pixelSize: 18
+        font.pixelSize: Theme.largeTextSize
         opacity: 0.7
         text: qsTr("Create a profile to start adding bindings.")
     }

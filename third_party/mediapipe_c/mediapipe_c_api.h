@@ -78,7 +78,10 @@ typedef struct MpCategories {
     uint32_t categories_count;
 } MpCategories;
 
-/* components/containers/matrix_c.py */
+/* components/containers/matrix_c.py. data is column-major: element (row r,
+ * column c) is data[c * rows + r] (checked against MediaPipe v1.0.0's
+ * mediapipe/tasks/c/components/containers/matrix.h and matrix_converter.cc,
+ * which memcpy an Eigen::MatrixXf). */
 typedef struct MpMatrix {
     uint32_t rows;
     uint32_t cols;

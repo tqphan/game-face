@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "frame_player.h"
 #include "list_models.h"
 #include "settings_object.h"
 #include "sound_player.h"
@@ -12,6 +13,7 @@
 #include <QMediaCaptureSession>
 #include <QMediaDevices>
 #include <QObject>
+#include <QPointF>
 #include <QPointer>
 #include <QQmlEngine>
 #include <QThread>
@@ -20,6 +22,20 @@
 
 #include <memory>
 #include <vector>
+
+// Command-line options main() sets before the QML engine creates App.
+struct StartupOptions {
+    // Frames to play in place of the camera: an image folder or a video file.
+    QString frames;
+    double framesFps = 0;      // 0: the folder's fps.txt, or 30
+    bool quitWhenFramesEnd = false;
+    // Settings and profiles folder; empty for the usual AppConfigLocation.
+    QString configFolder;
+    // Print input as text instead of injecting it (RecordingPlatform).
+    bool recordingInput = false;
+    // Start tracking at startup even if the settings don't say to.
+    bool startTracking = false;
+};
 
 // The `App` singleton QML talks to. Owns settings, profiles, the camera and
 // the tracking thread. Lives on the GUI thread. The QML engine creates and
@@ -46,9 +62,20 @@ class AppController : public QObject {
     Q_PROPERTY(QString configFolder READ configFolder CONSTANT)
     // [{id, name}] of the start/stop sounds Settings offers.
     Q_PROPERTY(QVariantList sounds READ sounds CONSTANT)
+    // Every name an expression or head mouse source can use.
+    Q_PROPERTY(QStringList signalNames READ signalNames CONSTANT)
+    Q_PROPERTY(QStringList headSignalNames READ headSignalNames CONSTANT)
+    // [{id, name, x, y}] of the head mouse presets.
+    Q_PROPERTY(QVariantList headMousePresets READ headMousePresets CONSTANT)
+    // Live head mouse readout: [{active, raw, normalised}] for pointer X,
+    // pointer Y, scroll X and scroll Y.
+    Q_PROPERTY(QVariantList headMouseAxes READ headMouseAxes NOTIFY headMouseChanged)
+    Q_PROPERTY(bool headMouseCalibrating READ headMouseCalibrating NOTIFY headMouseChanged)
 
 public:
     explicit AppController(QObject* parent = nullptr);
+    // Call before the QML engine creates App.
+    static void setStartupOptions(const StartupOptions& options);
     ~AppController() override;
 
     // Loads settings and profiles; starts tracking if configured to.
@@ -70,6 +97,16 @@ public:
     void setVideoOutput(QObject* output);
     QString configFolder() const;
     QVariantList sounds() const { return SoundPlayer::sounds(); }
+    QStringList signalNames() const;
+    QStringList headSignalNames() const;
+    QVariantList headMousePresets() const;
+    QVariantList headMouseAxes() const { return headMouseAxes_; }
+    bool headMouseCalibrating() const { return headMouseCalibrating_; }
+    // The pointer's normalised offset from neutral (x right, y up) and the
+    // deadzone, for the overlay's puck; showPuck is false when there's nothing to show.
+    QPointF headMousePuck() const { return headMousePuck_; }
+    double headMouseDeadzone() const;
+    bool showHeadMousePuck() const;
 
     const std::vector<game_face::Landmark>& landmarks() const { return landmarks_; }
 
@@ -83,6 +120,11 @@ public:
     Q_INVOKABLE void addBinding();
     Q_INVOKABLE void removeBinding(int row);
     Q_INVOKABLE void previewSound(const QString& name) { soundPlayer_->preview(name); }
+    // Captures the current head position as the head mouse's centre (on the
+    // next frame with a face).
+    Q_INVOKABLE void recenterHeadMouse();
+    // Measures the head mouse ranges over the next few seconds.
+    Q_INVOKABLE void calibrateHeadMouse();
     // Stops tracking and auto-saves. Call before quitting.
     Q_INVOKABLE void shutdown();
 
@@ -95,6 +137,7 @@ signals:
     void camerasChanged();
     void videoOutputChanged();
     void landmarksChanged();
+    void headMouseChanged();
 
 private:
     bool writeSettings();
@@ -114,6 +157,12 @@ private:
     void setProfilesDirty(bool dirty);
     void sendProfileToWorker(bool keep_state);
     void sendWorkerSettings();
+    // The worker changed the head mouse settings: show and save them.
+    void onWorkerHeadMouseSettings(const game_face::HeadMouseSettings& settings);
+    // Saves the head mouse part of the settings file, leaving other unsaved
+    // changes unsaved.
+    void saveHeadMouseSettings();
+    void startFrames();
     void applySoundSettings();
     void setStatus(const QString& message);
     void setFaceFound(bool found);
@@ -160,4 +209,9 @@ private:
     std::vector<game_face::Landmark> landmarks_;
     QTimer saveSettingsTimer_;
     QTimer saveProfilesTimer_;
+
+    FramePlayer framePlayer_;
+    QVariantList headMouseAxes_;
+    bool headMouseCalibrating_ = false;
+    QPointF headMousePuck_;
 };

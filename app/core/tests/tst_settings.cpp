@@ -97,6 +97,87 @@ private slots:
         QCOMPARE(reread->mesh_contour_width, 3.5);
     }
 
+    void textScale()
+    {
+        QCOMPARE(Settings{}.text_scale, 1.25);  // larger than Material's default text
+        auto s = settingsFromJson(R"({"text.scale": 1.5})");
+        QVERIFY(s.has_value());
+        QCOMPARE(s->text_scale, 1.5);
+        QCOMPARE(settingsFromJson(settingsToJson(*s))->text_scale, 1.5);
+        QCOMPARE(settingsFromJson(R"({"text.scale": 9})")->text_scale, 2.0);    // clamped
+        QCOMPARE(settingsFromJson(R"({"text.scale": 0.2})")->text_scale, 1.0);  // clamped
+    }
+
+    void headMouseDefaults()
+    {
+        // Files from before the head mouse load with its defaults.
+        auto s = loadSettings(std::filesystem::path(GAME_FACE_TEST_DATA_DIR) / "user.settings.json");
+        QVERIFY(s.has_value());
+        const HeadMouseSettings& hm = s->head_mouse;
+        QVERIFY(!hm.enabled);
+        QCOMPARE(hm.click_freeze_ms, 150.0);
+        QCOMPARE(hm.pointer.mode, HeadMouseMode::Relative);
+        QCOMPARE(hm.pointer.x.source, std::string("headYaw"));
+        QCOMPARE(hm.pointer.y.source, std::string("headPitch"));
+        QVERIFY(!hm.pointer.x.neutral);
+        QCOMPARE(hm.scroll.mode, HeadMouseMode::Joystick);
+        QVERIFY(hm.scroll.x.source.empty());
+        QVERIFY(hm.scroll.y.source.empty());
+    }
+
+    void headMouseRoundTrip()
+    {
+        Settings s;
+        HeadMouseSettings& hm = s.head_mouse;
+        hm.enabled = true;
+        hm.click_freeze_ms = 200;
+        hm.pointer.mode = HeadMouseMode::Joystick;
+        hm.pointer.deadzone = 0.1;
+        hm.pointer.smoothing = 0.8;
+        hm.pointer.x.source = "headYaw + 2 * headX";
+        hm.pointer.x.neutral = -3.25;
+        hm.pointer.x.range_negative = 12;
+        hm.pointer.x.range_positive = 18;
+        hm.pointer.x.gain = 1.5;
+        hm.pointer.x.invert = true;
+        hm.scroll.mode = HeadMouseMode::Relative;
+        hm.scroll.y.source = "headRoll";
+
+        auto reread = settingsFromJson(settingsToJson(s));
+        QVERIFY(reread.has_value());
+        const HeadMouseSettings& r = reread->head_mouse;
+        QVERIFY(r.enabled);
+        QCOMPARE(r.click_freeze_ms, 200.0);
+        QCOMPARE(r.pointer.mode, HeadMouseMode::Joystick);
+        QCOMPARE(r.pointer.deadzone, 0.1);
+        QCOMPARE(r.pointer.smoothing, 0.8);
+        QCOMPARE(r.pointer.x.source, hm.pointer.x.source);
+        QCOMPARE(r.pointer.x.neutral, std::optional<double>(-3.25));
+        QCOMPARE(r.pointer.x.range_negative, 12.0);
+        QCOMPARE(r.pointer.x.range_positive, 18.0);
+        QCOMPARE(r.pointer.x.gain, 1.5);
+        QVERIFY(r.pointer.x.invert);
+        QVERIFY(!r.pointer.y.neutral);  // unset stays unset
+        QCOMPARE(r.scroll.mode, HeadMouseMode::Relative);
+        QCOMPARE(r.scroll.y.source, std::string("headRoll"));
+        QVERIFY(r.scroll.x.source.empty());
+    }
+
+    void headMouseMalformed()
+    {
+        auto s = settingsFromJson(R"({"head.mouse.pointer.mode": "teleport", "head.mouse.pointer.x.gain": 99,
+                                      "head.mouse.pointer.x.range.negative": -4, "head.mouse.pointer.deadzone": 3,
+                                      "head.mouse.pointer.x.neutral": "abc", "head.mouse.scroll.y.source": 7})");
+        QVERIFY(s.has_value());
+        const HeadMouseSettings& hm = s->head_mouse;
+        QCOMPARE(hm.pointer.mode, HeadMouseMode::Relative);
+        QCOMPARE(hm.pointer.x.gain, 10.0);             // clamped
+        QCOMPARE(hm.pointer.x.range_negative, 20.0);   // not positive: default
+        QCOMPARE(hm.pointer.deadzone, 0.9);            // clamped
+        QVERIFY(!hm.pointer.x.neutral);                // not a number: unset
+        QVERIFY(hm.scroll.y.source.empty());           // not a string
+    }
+
     void saveAndLoad()
     {
         QTemporaryDir dir;

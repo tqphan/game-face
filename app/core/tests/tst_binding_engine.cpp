@@ -227,6 +227,27 @@ private slots:
         QCOMPARE(h.feed("jawOpen", {61}), Commands{"b"});
     }
 
+    void headSignalsInExpressions()
+    {
+        Harness h({advancedBinding("headRoll > 15 and jawOpen < 10", "keyboard.press(KEY_A)",
+                                   "headRoll < 5", "keyboard.release(KEY_A)")});
+        QVERIFY(h.engine.status()[0].start_error.empty());
+        Commands sent;
+        BindingEngine& engine = h.engine;
+        double t = 0;
+        for (double roll : {0.0, 10.0, 20.0, 20.0, 3.0}) {
+            SignalValues v{};
+            v[signalIndex(HeadSignal::Roll)] = roll;
+            h.sent.clear();
+            engine.process(v, t += 33);
+            sent.insert(sent.end(), h.sent.begin(), h.sent.end());
+        }
+        QCOMPARE(sent, (Commands{"keyboard.press(KEY_A)", "keyboard.release(KEY_A)"}));
+        // Blendshape-only scores leave the head signals at 0.
+        Harness zero({advancedBinding("headRoll < 1", "keyboard.tap(KEY_B)", "headRoll > 1", "")});
+        QCOMPARE(zero.feed("jawOpen", {0}), (Commands{"keyboard.tap(KEY_B)"}));
+    }
+
     void setProfileReplacesBindings()
     {
         Harness h({simpleBinding("jawOpen", 50, "old", "")});

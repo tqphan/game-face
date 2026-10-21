@@ -1,5 +1,12 @@
 #include "settings_object.h"
 
+SettingsObject::SettingsObject(QObject* parent)
+    : QObject(parent)
+    , headMouse_(new HeadMouseObject(this))
+{
+    connect(headMouse_, &HeadMouseObject::changed, this, &SettingsObject::changed);
+}
+
 void SettingsObject::load(const game_face::Settings& s)
 {
     theme = QString::fromStdString(s.theme);
@@ -34,8 +41,14 @@ void SettingsObject::load(const game_face::Settings& s)
     meshIrisesVisible = s.mesh_irises.visible;
     meshContourWidth = s.mesh_contour_width;
     meshTessellationWidth = s.mesh_tessellation_width;
+    textScale = s.text_scale;
     autoStartWithOs = s.auto_start_with_os;
     runOnSecureDesktop = s.run_on_secure_desktop;
+    {
+        // One changed() for the whole load.
+        const QSignalBlocker block(this);
+        headMouse_->load(s.head_mouse);
+    }
     emit changed();
 }
 
@@ -68,8 +81,10 @@ game_face::Settings SettingsObject::toSettings() const
     s.mesh_irises = {meshIrisesColor.toStdString(), meshIrisesVisible};
     s.mesh_contour_width = meshContourWidth;
     s.mesh_tessellation_width = meshTessellationWidth;
+    s.text_scale = textScale;
     s.auto_start_with_os = autoStartWithOs;
     s.run_on_secure_desktop = runOnSecureDesktop;
+    s.head_mouse = headMouse_->toSettings();
     return s;
 }
 

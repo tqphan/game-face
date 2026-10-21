@@ -8,9 +8,12 @@ add_library(game_face_core STATIC
     src/dynamic_library.cpp
     src/expression.cpp
     src/face_tracker.cpp
+    src/head_mouse.cpp
+    src/head_mouse_settings.cpp
     src/json_util.cpp
     src/profiles.cpp
     src/settings.cpp
+    src/signals.cpp
 )
 target_include_directories(game_face_core
     PUBLIC include

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "result.h"
+#include "signals.h"
 
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -45,6 +47,7 @@ struct FaceFrame {
     bool face_found = false;
     std::vector<Blendshape> blendshapes;
     std::vector<Landmark> landmarks;  // 478 when a face is found
+    std::optional<HeadPose> pose;     // from the facial transformation matrix
 };
 
 // Wraps a MediaPipe face landmarker from libmediapipe, loaded at runtime.

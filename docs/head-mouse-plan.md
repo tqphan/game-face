@@ -63,7 +63,7 @@ Each frame it takes `(signals, t_ms)` and returns integer pointer `(dx, dy)` and
 1. **Evaluate and normalise.** For each axis: `n = (source − neutral) / range` (using the negative or positive range depending on the sign), so ±1 is a full deflection whatever the source and its units.
 2. **Smoothing.** Run each normalised value through a One Euro filter. Filtering after normalising means one smoothing setting behaves the same for degrees, centimetres and blendshape scores.
 3. **Radial deadzone** on the group's 2D normalised vector, then a response curve, by mode:
-   - **Relative.** Movement = change in normalised value since the last frame × gain, with acceleration. It feels like a trackpad, and it works in games that read raw input.
+   - **Relative.** The head drags a point along behind it (backlash): the point only moves once the head is more than the deadzone away from it. Movement = the point's movement × gain, with acceleration. Tracking noise wobbles around a still head and never gets that far; a real movement loses only the deadzone's width when it starts or turns back. (A deadzone on speed was tried first; the bench showed noise and slow movement have overlapping speeds, so it let 25 px/s of drift through.) It feels like a trackpad, and it works in games that read raw input.
    - **Joystick.** Velocity = normalised offset × gain. Hold a deflection and it keeps moving. Good for FPS camera control, large screens and scrolling.
    - **Absolute (later).** Normalised position maps to a screen position through `moveTo`. Desktop only, because games ignore absolute moves.
 4. **Sub-pixel / sub-notch accumulator** per axis, carrying fractional remainders to the next frame. Without it, slow movement stalls. Scrolling especially needs it, since a notch is large.
@@ -87,9 +87,10 @@ Profiles don't change. Switching profiles leaves the head mouse settings alone.
 - `headmouse.toggle()`, `headmouse.enable()`, `headmouse.disable()`: these change `head.mouse.enabled` and save it, so the state is still there after a restart.
 - `headmouse.hold()` / `headmouse.release()`: a clutch that freezes pointer and scroll while you reposition your head, like lifting a mouse off the desk. Not saved.
 - `headmouse.recenter()`: captures the current value of every axis's source as its neutral and saves it.
+- `headmouse.calibrate()`: starts the range calibration (as the Calibrate button does); the measured ranges are saved.
 
 Rules:
-- **Input simulation off:** `headmouse.recenter()` still runs. Every other `headmouse.*` command is skipped, the same as other commands.
+- **Input simulation off:** `headmouse.recenter()` and `headmouse.calibrate()` still run, since they move nothing. Every other `headmouse.*` command is skipped, the same as other commands.
 - **No mixing:** a command is either entirely `headmouse.*` calls or entirely `input_devices_simulator` script. A command that mixes the two is rejected with an error through `onError`, and none of it runs. The binding editor should show the same error when the command is entered.
 
 **Head signals in bindings (optional, phase 6):** the head signals (`headRoll`, `headZ`, …) can also be offered to advanced binding expressions, since `Expression` already takes the variable list. For example, `headRoll > 15` presses a key when you tilt your head, and `headZ > 5` when you lean in. Simple bindings stay blendshape-only, because their 0–100 threshold slider doesn't fit degrees or centimetres.
@@ -136,9 +137,10 @@ Also:
 
 #### 8.2 Face tracking (images with a known pose)
 Checks that `FaceTracker` reports the right signals, with the right signs, for real face images.
-- **2D transforms of a real photo:** start from one freely licensed, front-facing photo in `tests/data`. Rotating, shifting and scaling it in software gives exact expected values for `headRoll`, `noseX/noseY`, `headX/headY` (approximately, through the camera model) and `headZ` (from scale). No 3D rendering is needed for these.
+- **2D transforms of a real photo:** start from one front-facing photo: `portrait.jpg` from MediaPipe's own test assets, downloaded at configure time by `cmake/FetchTestAssets.cmake` (not committed; its license should be confirmed before it's ever redistributed). Rotating, shifting and scaling it in software gives exact expected values for `headRoll`, `noseX/noseY`, `headX/headY` (approximately, through the camera model) and `headZ` (from scale). No 3D rendering is needed for these.
 - **3D renders for yaw and pitch:** a flat photo can't be turned, so `tools/face-render` renders a 3D head scan with Qt Quick 3D (already in the Qt install) offscreen at any yaw, pitch, roll and position. Candidate model: the Lee Perry-Smith head scan (CC BY 3.0, as used in the three.js examples). Its license and attribution go next to the other third-party licenses.
   - **Prototype this first:** render a few poses and check that MediaPipe finds the face and that its pose matches the render. If the render doesn't look real enough to MediaPipe, fall back to a small set of real photos with labelled head angles, from a dataset whose license allows it.
+  - **Result:** MediaPipe tracks the renders. `face-render` is a small CPU rasteriser (no GPU, same pixels everywhere), not Qt Quick 3D. With MediaPipe's 63° field of view and the scan at 5.5 cm per unit, the frontal render tracks at yaw/pitch/roll within 2° and 49.9 cm (set: 50). Single-axis turns of 20° measure 20–21°, pitch ±12° measures ±11°, moves of 5 cm measure 5.0 cm, and leaning in 10 cm measures 10.4 cm. Moving the head sideways also reads as about 4° of yaw (the camera sees it from an angle), which matters for the Head position preset.
 - **Robustness variants:** add camera-like noise, blur, JPEG compression, dim lighting and an off-centre face to the same images. Check that the signals stay within tolerance, and measure how much they jitter for a still head.
 - `tst_face_signals` runs `FaceTracker` on these images and compares the signals with the known pose, with tolerances (for example ±3° for angles). Images are generated at test time or stored small in `tests/data`; generated sequences are cached in the build directory, not committed.
 - `face-probe --image` prints all the head signals, for checking one image by hand.
@@ -147,7 +149,8 @@ Checks that `FaceTracker` reports the right signals, with the right signs, for r
 - **Frame source option:** `TrackingWorker` takes frames from a pluggable source. Besides the camera there's a file source (an image sequence or a video through `QMediaPlayer` → `QVideoSink`) used by tests and by a `--frames <path>` command-line option. Timestamps come from the file, so a test can play it at 15 or 60 fps.
 - **Recording mouse:** the worker can be given an `input_devices_simulator::RecordingPlatform` in place of the real one. It records each event as text (`mouse moveBy 5 -3`, `mouse scroll 0 -1`) and injects nothing.
 - **Head motion scripts:** `face-render` (and the 2D photo transforms) turn a short script into an image sequence, for example "neutral 0.5 s, yaw to +20° over 1 s, hold 1 s, back to 0° over 1 s", or "face disappears for 0.5 s". Each script states the expected result.
-- `tst_head_mouse_e2e` plays these sequences through the worker and checks the recorded events: the pointer moved right by roughly the expected amount, stopped while the head held still, didn't jump when the face came back, scrolled on roll when scroll was set to `headRoll`, and froze during the clutch. Bindings that use `headmouse.*` commands are driven by sequences that include the expression (for example a smile in the source photo).
+- `tst_tracking_worker` (label `tracking`) plays these sequences through the worker with input simulation **off**, so the input simulator is never created: it checks the movement the head mouse computes, the presets, face loss, head signals in bindings, `headmouse.recenter()`/`calibrate()` working with input off, `toggle()` not working with input off, and mixed commands being rejected.
+- `tst_head_mouse_e2e` (label `headmouse-e2e`) turns input simulation on and checks the recorded events: the pointer moved right and up (screen y negative) by what the mapper computed, nothing came out with input off, roll scrolled, a binding toggled the head mouse on, the clutch held it, a click froze it, absolute mode placed it, and a mixed command sent nothing. Bindings that use `headmouse.*` commands are driven by head signals (for example `headRoll > 12`), since the renders can't change expression.
 - The app itself, started with `QT_QPA_PLATFORM=offscreen`, `--frames` and the recording platform, checks that the settings flow from `AppController` to the worker and back (recenter, toggle saving).
 
 #### 8.4 UI (Qt Quick Test)
@@ -172,21 +175,23 @@ The bench prints a table and writes a CSV; CI keeps the results as a build artif
 
 #### 8.6 Where the tests run
 - **CI (GitHub Actions)** runs every test above on Windows, Linux and macOS. It is the main place they run, because nothing there acts on a real desktop.
-- **Locally:** the mapper, signal and settings tests (8.1, 8.2) are core tests like the others. The tests that use the recording mouse (8.3, 8.4) are labelled `headmouse-e2e` so they can be run or skipped as a group. The CI-only injection test is skipped unless the `GAME_FACE_CI_INJECTION` environment variable is set.
+- **Locally:** labels `core` (mapper, signals, settings, the bench's `--check`), `tracking` (MediaPipe on renders and photos, the worker with input off) and `qml` touch neither a camera nor the input simulator. `headmouse-e2e` (`tst_head_mouse_e2e` and `app_smoke`, the whole app offscreen with `--frames` and `--recording-input`) uses `RecordingPlatform`, so it's run or skipped as a group. The CI-only injection test (`ci-injection`) is skipped unless `GAME_FACE_CI_INJECTION=1`.
 
 #### 8.7 What still needs a person
 Comfort and fatigue over long sessions, real webcams in poor conditions, and how specific games react to the input. The measurements in 8.5 narrow these down, and a short session with a tester covers the rest.
 
 ## Phases
-1. [ ] Signals: pose output in `FaceTracker`, `headX/Y/Z`, `noseX/Y`, `face-probe` printing them, and the matrix tests.
-2. [ ] Test images: the 2D photo transforms, the `face-render` prototype (check MediaPipe accepts the renders, else the labelled-photo fallback), and `tst_face_signals`.
-3. [ ] `HeadMouse` mapper with sources, normalisation, relative and joystick modes, and tests (8.1).
-4. [ ] Pluggable frame source and `--frames`, the recording mouse in the worker, and head motion scripts.
-5. [ ] Worker integration (pointer and scroll), calibration, the `headmouse.*` commands, the global settings, and `tst_head_mouse_e2e`.
-6. [ ] QML settings section with presets and custom sources, the live readout, the overlay puck, and `tst_head_mouse_qml`.
-7. [ ] `head-mouse-bench`, the simulated user, tuning the defaults from its numbers, CI artifacts, and the CI-only injection test.
-8. [ ] Optional: absolute mode, and tuning the click freeze.
-9. [ ] Optional: head signals in advanced binding expressions.
+All done, including the optional ones; `headmouse-e2e` and `ci-injection` still need a first run (CI, or locally by the user).
+
+1. [x] Signals: pose output in `FaceTracker`, `headX/Y/Z`, `noseX/Y`, `face-probe` printing them, and the matrix tests.
+2. [x] Test images: the 2D photo transforms, the `face-render` prototype (check MediaPipe accepts the renders, else the labelled-photo fallback), and `tst_face_signals`.
+3. [x] `HeadMouse` mapper with sources, normalisation, relative and joystick modes, and tests (8.1).
+4. [x] Pluggable frame source and `--frames`, the recording mouse in the worker, and head motion scripts.
+5. [x] Worker integration (pointer and scroll), calibration, the `headmouse.*` commands, the global settings, and `tst_head_mouse_e2e`.
+6. [x] QML settings section with presets and custom sources, the live readout, the overlay puck, and `tst_head_mouse_qml`.
+7. [x] `head-mouse-bench`, the simulated user, tuning the defaults from its numbers, CI artifacts, and the CI-only injection test.
+8. [x] Optional: absolute mode, and tuning the click freeze.
+9. [x] Optional: head signals in advanced binding expressions.
 
 ## Platform notes
 - **Windows:** relative `SendInput` moves go through "Enhance pointer precision" (pointer acceleration), so the same head movement can move the pointer by different amounts. Document this in the user-facing help: turn the option off in Windows mouse settings for consistent movement. No compensation in code.
@@ -200,9 +205,11 @@ Comfort and fatigue over long sessions, real webcams in poor conditions, and how
 4. dt scales joystick velocity and the velocity used for relative-mode acceleration, never the relative movement itself.
 5. When the face comes back, the saved neutral is kept. The user recenters or adjusts it in the settings.
 6. `headmouse.toggle/enable/disable` save the enabled state.
-7. `headmouse.recenter()` works even when input simulation is off.
+7. `headmouse.recenter()` (and `headmouse.calibrate()`, added later) work even when input simulation is off.
 8. Commands can't mix `headmouse.*` calls with other script. Mixed commands are rejected.
 9. "Enhance pointer precision" is documented, not compensated for.
 10. Each source is normalised by its range before smoothing, the deadzone and gain, so those settings mean the same thing for every source.
 11. Signals are defined from the user's point of view. Mirroring is handled when the signals are computed, not per axis.
 12. Every feature has to be testable without anyone moving in front of a camera: generated face images with a known pose, a video file in place of the camera, a recording mouse, and measured feel (section 8). Real injection is only tested in CI.
+13. Relative mode's deadzone is a backlash, not a speed threshold (section 3, step 3).
+14. Defaults, from `head-mouse-bench` (deadzone and smoothing swept at 1×, 2× and 3× the measured tracking noise): deadzone 0.06, smoothing 0.6. At the measured noise (yaw 0.15°, pitch 0.27° on a still head) the pointer doesn't drift and the simulated user hits every target in about 1.4 s (2.6 bits/s); at 3× it drifts 0.7 px/s and misses 6%.

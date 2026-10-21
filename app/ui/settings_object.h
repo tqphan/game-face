@@ -1,5 +1,7 @@
 #pragma once
 
+#include "head_mouse_object.h"
+
 #include <game_face/core/settings.h>
 
 #include <QObject>
@@ -45,14 +47,17 @@ class SettingsObject : public QObject {
     Q_PROPERTY(bool meshIrisesVisible MEMBER meshIrisesVisible NOTIFY changed)
     Q_PROPERTY(double meshContourWidth MEMBER meshContourWidth NOTIFY changed)
     Q_PROPERTY(double meshTessellationWidth MEMBER meshTessellationWidth NOTIFY changed)
+    Q_PROPERTY(double textScale MEMBER textScale NOTIFY changed)
+    Q_PROPERTY(HeadMouseObject* headMouse READ headMouse CONSTANT)
 
 public:
-    using QObject::QObject;
+    explicit SettingsObject(QObject* parent = nullptr);
 
     void load(const game_face::Settings& s);
     game_face::Settings toSettings() const;
     // Restores the face mesh colours, visibility and widths to their defaults.
     Q_INVOKABLE void resetMeshStyle();
+    HeadMouseObject* headMouse() const { return headMouse_; }
 
     QString theme;
     QString language;
@@ -86,6 +91,7 @@ public:
     bool meshIrisesVisible = true;
     double meshContourWidth = 1;
     double meshTessellationWidth = 1;
+    double textScale = 1.25;
 
     // Not shown in the UI yet, but kept so saving doesn't drop them.
     bool autoStartWithOs = false;
@@ -93,4 +99,7 @@ public:
 
 signals:
     void changed();
+
+private:
+    HeadMouseObject* headMouse_;
 };

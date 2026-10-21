@@ -1,7 +1,10 @@
 name: CI
 
-# Builds the Qt app on every platform and runs the core tests. The core tests
-# never inject input or open a camera. Release packaging is in release.yml.
+# Builds the Qt app on every platform and runs the tests. No test opens a
+# camera: face tracking runs on rendered and transformed images
+# (docs/head-mouse-plan.md, section 8). Input is recorded as text, except in
+# the Windows-only ci-injection test, which moves this machine's pointer.
+# Release packaging is in release.yml.
 
 on:
   push:
@@ -56,6 +59,12 @@ jobs:
           path: build/_deps/mediapipe-*
           key: mediapipe-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('cmake/FetchMediaPipe.cmake') }}
 
+      - name: Cache test assets
+        uses: actions/cache@v4
+        with:
+          path: build/_deps/test-assets
+          key: test-assets-${{ hashFiles('cmake/FetchTestAssets.cmake') }}
+
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 
@@ -63,7 +72,30 @@ jobs:
         run: cmake --build build
 
       - name: Test
-        run: ctest --test-dir build -L core --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build -L "core|tracking|qml|headmouse-e2e" --output-on-failure
+
+      # Real SendInput moves, read back with GetCursorPos; also measures
+      # "Enhance pointer precision". Never run this on a machine someone uses.
+      - name: Test real pointer movement
+        if: runner.os == 'Windows'
+        env:
+          GAME_FACE_CI_INJECTION: '1'
+        run: ctest --test-dir build -L ci-injection --output-on-failure -V
+
+      # How the head mouse feels, in numbers, kept with each run.
+      - name: Head mouse bench
+        shell: bash
+        run: |
+          bench=build/tools/head-mouse-bench/head-mouse-bench
+          $bench --csv bench-noise-1.csv
+          $bench --noise 3 --csv bench-noise-3.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: head-mouse-bench-${{ runner.os }}
+          path: bench-noise-*.csv
 
       - name: Install
         run: cmake --install build --prefix "${{ github.workspace }}/dist"

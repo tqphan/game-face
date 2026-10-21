@@ -64,7 +64,7 @@ void BindingEngine::compileProfile(const Profile& profile)
             error = "expression is empty";
             return;
         }
-        auto expression = Expression::compile(trigger.expression, kBlendshapeNames);
+        auto expression = Expression::compile(trigger.expression, kSignalNames);
         if (expression)
             out.expression = std::move(*expression);
         else
@@ -108,17 +108,17 @@ void BindingEngine::reset()
     }
 }
 
-void BindingEngine::process(const BlendshapeScores& scores, double time_ms)
+void BindingEngine::process(const SignalValues& values, double time_ms)
 {
     for (std::size_t i = 0; i < bindings_.size(); ++i) {
         CompiledBinding& binding = bindings_[i];
         if (!binding.enabled)
             continue;
         if (binding.simplified) {
-            processSimple(binding, scores);
+            processSimple(binding, values);
         } else {
-            processTrigger(binding.start, scores, time_ms, Edge::Start);
-            processTrigger(binding.stop, scores, time_ms, Edge::Stop);
+            processTrigger(binding.start, values, time_ms, Edge::Start);
+            processTrigger(binding.stop, values, time_ms, Edge::Stop);
         }
         updateStatus(i);
     }
@@ -129,7 +129,7 @@ void BindingEngine::settle(double time_ms)
     double longest = 0;
     for (const CompiledBinding& binding : bindings_)
         longest = std::max({longest, binding.start.debounce_ms, binding.stop.debounce_ms});
-    const BlendshapeScores zero{};
+    const SignalValues zero{};
     process(zero, time_ms);
     // Debounce needs strictly more than debounce_ms to have passed.
     if (longest > 0)
@@ -137,11 +137,11 @@ void BindingEngine::settle(double time_ms)
 }
 
 // Hysteresis on one blendshape. A value equal to the threshold changes nothing.
-void BindingEngine::processSimple(CompiledBinding& binding, const BlendshapeScores& scores)
+void BindingEngine::processSimple(CompiledBinding& binding, const SignalValues& values)
 {
     if (!binding.blendshape)
         return;
-    const double value = scores[*binding.blendshape];
+    const double value = values[*binding.blendshape];  // blendshapes come first
     if (binding.armed) {
         if (binding.threshold < value) {
             fire(binding.start_command, Edge::Start);
@@ -155,10 +155,10 @@ void BindingEngine::processSimple(CompiledBinding& binding, const BlendshapeScor
 
 // Fires once when the expression turns true, after it has stayed true for
 // longer than debounce_ms; re-arms as soon as it turns false.
-void BindingEngine::processTrigger(CompiledTrigger& trigger, const BlendshapeScores& scores, double time_ms,
+void BindingEngine::processTrigger(CompiledTrigger& trigger, const SignalValues& values, double time_ms,
                                    Edge edge)
 {
-    const bool valid = trigger.expression && trigger.expression->test(scores);
+    const bool valid = trigger.expression && trigger.expression->test(values);
     if (!valid) {
         trigger.activated = false;
         trigger.since_ms.reset();

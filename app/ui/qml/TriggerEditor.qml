@@ -50,7 +50,7 @@ Frame {
             visible: editor.expressionError !== ""
             text: editor.expressionError
             wrapMode: Text.WordWrap
-            font.pixelSize: 12
+            font.pixelSize: Theme.smallTextSize
             color: Material.color(Material.Red)
         }
 

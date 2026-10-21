@@ -25,7 +25,7 @@ Pane {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignBaseline
                 text: "game-face"
-                font.pixelSize: 22
+                font.pixelSize: Theme.titleTextSize
                 font.bold: true
             }
             Label {

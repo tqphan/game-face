@@ -39,7 +39,7 @@ ColumnLayout {
         visible: root.error !== ""
         text: root.error
         wrapMode: Text.WordWrap
-        font.pixelSize: 12
+        font.pixelSize: Theme.smallTextSize
         color: Material.color(Material.Red)
     }
 }

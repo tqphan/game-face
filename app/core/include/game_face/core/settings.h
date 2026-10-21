@@ -1,5 +1,6 @@
 #pragma once
 
+#include "head_mouse_settings.h"
 #include "result.h"
 
 #include <filesystem>
@@ -57,6 +58,11 @@ struct Settings {
     MeshStyle mesh_irises{"#ff3030"};
     double mesh_contour_width = 1;            // mesh.contour.width, px, 1..6
     double mesh_tessellation_width = 1;       // mesh.tessellation.width, px, 0.5..3
+    double text_scale = 1.25;                 // text.scale (new), 1..2: every font in the app
+    // Head mouse (new), under head.mouse.*: head.mouse.enabled,
+    // head.mouse.click.freeze, head.mouse.<pointer|scroll>.{mode,deadzone,smoothing}
+    // and head.mouse.<group>.<x|y>.{source,neutral,range.negative,range.positive,gain,invert}.
+    HeadMouseSettings head_mouse;
 };
 
 // Missing or malformed values keep their defaults; unknown keys are ignored.

@@ -1,6 +1,8 @@
 #include "list_models.h"
 
 #include <game_face/core/expression.h>
+#include <game_face/core/head_mouse.h>
+#include <game_face/core/signals.h>
 
 #include <input_devices_simulator/script.h>
 
@@ -21,7 +23,7 @@ QString expressionError(const std::string& text)
 {
     if (isBlank(text))
         return {};
-    auto compiled = Expression::compile(text, kBlendshapeNames);
+    auto compiled = Expression::compile(text, kSignalNames);
     return compiled ? QString() : QString::fromStdString(compiled.error().message);
 }
 
@@ -29,6 +31,9 @@ QString commandError(const std::string& text)
 {
     if (isBlank(text))
         return {};
+    // headmouse.* commands go to the head mouse, not the input simulator.
+    if (auto head_mouse = parseHeadMouseCommand(text))
+        return *head_mouse ? QString() : QString::fromStdString(head_mouse->error().message);
     auto parsed = input_devices_simulator::parseCommand(text);
     return parsed ? QString() : QString::fromStdString(parsed.error().message);
 }

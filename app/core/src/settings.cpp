@@ -48,6 +48,50 @@ void writeMesh(QJsonObject& o, const char* group, const MeshStyle& style)
     o.insert(prefix + "visible", style.visible);
 }
 
+void readAxis(const QJsonObject& o, const QString& prefix, HeadMouseAxis& axis)
+{
+    if (o.contains(prefix + "source"))
+        axis.source = toStdString(o.value(prefix + "source"));
+    const QJsonValue neutral = o.value(prefix + "neutral");
+    axis.neutral = neutral.isDouble() ? std::optional<double>(neutral.toDouble()) : std::nullopt;
+    auto range = [](double value, double fallback) { return value > 0 ? value : fallback; };
+    axis.range_negative = range(toNumber(o.value(prefix + "range.negative"), 0), axis.range_negative);
+    axis.range_positive = range(toNumber(o.value(prefix + "range.positive"), 0), axis.range_positive);
+    axis.gain = std::clamp(toNumber(o.value(prefix + "gain"), axis.gain), 0.05, 10.0);
+    axis.invert = toBool(o.value(prefix + "invert"), axis.invert);
+}
+
+void writeAxis(QJsonObject& o, const QString& prefix, const HeadMouseAxis& axis)
+{
+    o.insert(prefix + "source", toQString(axis.source));
+    o.insert(prefix + "neutral", axis.neutral ? QJsonValue(*axis.neutral) : QJsonValue(QJsonValue::Null));
+    o.insert(prefix + "range.negative", axis.range_negative);
+    o.insert(prefix + "range.positive", axis.range_positive);
+    o.insert(prefix + "gain", axis.gain);
+    o.insert(prefix + "invert", axis.invert);
+}
+
+void readGroup(const QJsonObject& o, const char* name, HeadMouseGroup& group)
+{
+    const QString prefix = QStringLiteral("head.mouse.%1.").arg(QLatin1String(name));
+    if (auto mode = headMouseModeFromString(toStdString(o.value(prefix + "mode"))))
+        group.mode = *mode;
+    group.deadzone = std::clamp(toNumber(o.value(prefix + "deadzone"), group.deadzone), 0.0, 0.9);
+    group.smoothing = std::clamp(toNumber(o.value(prefix + "smoothing"), group.smoothing), 0.0, 1.0);
+    readAxis(o, prefix + "x.", group.x);
+    readAxis(o, prefix + "y.", group.y);
+}
+
+void writeGroup(QJsonObject& o, const char* name, const HeadMouseGroup& group)
+{
+    const QString prefix = QStringLiteral("head.mouse.%1.").arg(QLatin1String(name));
+    o.insert(prefix + "mode", toQString(std::string(headMouseModeName(group.mode))));
+    o.insert(prefix + "deadzone", group.deadzone);
+    o.insert(prefix + "smoothing", group.smoothing);
+    writeAxis(o, prefix + "x.", group.x);
+    writeAxis(o, prefix + "y.", group.y);
+}
+
 } // namespace
 
 Result<Settings> settingsFromJson(std::string_view json)
@@ -89,6 +133,12 @@ Result<Settings> settingsFromJson(std::string_view json)
     s.mesh_contour_width = std::clamp(toNumber(o.value("mesh.contour.width"), s.mesh_contour_width), 1.0, 6.0);
     s.mesh_tessellation_width =
         std::clamp(toNumber(o.value("mesh.tessellation.width"), s.mesh_tessellation_width), 0.5, 3.0);
+    s.text_scale = std::clamp(toNumber(o.value("text.scale"), s.text_scale), 1.0, 2.0);
+    HeadMouseSettings& hm = s.head_mouse;
+    hm.enabled = toBool(o.value("head.mouse.enabled"), hm.enabled);
+    hm.click_freeze_ms = std::clamp(toNumber(o.value("head.mouse.click.freeze"), hm.click_freeze_ms), 0.0, 1000.0);
+    readGroup(o, "pointer", hm.pointer);
+    readGroup(o, "scroll", hm.scroll);
     return s;
 }
 
@@ -118,6 +168,7 @@ std::string settingsToJson(const Settings& s)
         {"sound.volume", s.sound_volume},
         {"mesh.contour.width", s.mesh_contour_width},
         {"mesh.tessellation.width", s.mesh_tessellation_width},
+        {"text.scale", s.text_scale},
     };
     writeMesh(root, "tessellation", s.mesh_tessellation);
     writeMesh(root, "faceOval", s.mesh_face_oval);
@@ -125,6 +176,10 @@ std::string settingsToJson(const Settings& s)
     writeMesh(root, "eyes", s.mesh_eyes);
     writeMesh(root, "eyebrows", s.mesh_eyebrows);
     writeMesh(root, "irises", s.mesh_irises);
+    root.insert("head.mouse.enabled", s.head_mouse.enabled);
+    root.insert("head.mouse.click.freeze", s.head_mouse.click_freeze_ms);
+    writeGroup(root, "pointer", s.head_mouse.pointer);
+    writeGroup(root, "scroll", s.head_mouse.scroll);
     return QJsonDocument(root).toJson(QJsonDocument::Indented).toStdString();
 }
 

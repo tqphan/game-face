@@ -117,7 +117,7 @@ Result<std::unique_ptr<FaceTracker>> FaceTracker::create(const FaceTrackerOption
     mp.min_face_presence_confidence = options.min_face_presence_confidence;
     mp.min_tracking_confidence = options.min_tracking_confidence;
     mp.output_face_blendshapes = true;
-    mp.output_facial_transformation_matrixes = false;
+    mp.output_facial_transformation_matrixes = true;
 
     char* error = nullptr;
     if (impl->create(&mp, &impl->landmarker, &error) != kMpOk || !impl->landmarker)
@@ -180,6 +180,11 @@ Result<FaceFrame> FaceTracker::detect(const RgbImageView& image, std::int64_t ti
             const MpCategory& c = shapes.categories[i];
             frame.blendshapes.push_back({c.category_name ? c.category_name : "", c.score});
         }
+    }
+    if (result.facial_transformation_matrixes_count > 0) {
+        const MpMatrix& m = result.facial_transformation_matrixes[0];
+        if (m.rows == 4 && m.cols == 4 && m.data)
+            frame.pose = headPoseFromMatrix(std::span<const float, 16>(m.data, 16));
     }
     d.closeResult(&result);
     return frame;

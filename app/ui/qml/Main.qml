@@ -15,6 +15,7 @@ ApplicationWindow {
 
     Material.theme: App.settings.theme === "light" ? Material.Light : Material.Dark
     Material.accent: Material.Teal
+    font.pixelSize: Theme.textSize
 
     property bool closeConfirmed: false
 
