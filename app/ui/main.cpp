@@ -1,5 +1,7 @@
 #include "app_controller.h"
 
+#include <optional>
+
 #include <QGuiApplication>
 #include <QIcon>
 #include <QPointerEvent>
@@ -7,6 +9,17 @@
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QStyleHints>
+
+#ifdef Q_OS_WIN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
 
 namespace {
 
@@ -39,6 +52,37 @@ protected:
     }
 };
 
+// Makes the window frame follow the app's theme rather than the system's.
+// Qt handles the title bar; the title bar's system menu (and other Win32
+// menus) only turn dark through uxtheme's unnamed SetPreferredAppMode (#135)
+// and FlushMenuThemes (#136), which Windows 10 1903 and later export.
+void applyColorScheme(bool dark)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    QGuiApplication::styleHints()->setColorScheme(dark ? Qt::ColorScheme::Dark
+                                                       : Qt::ColorScheme::Light);
+#endif
+#ifdef Q_OS_WIN
+    using SetPreferredAppMode = int(WINAPI*)(int);
+    using FlushMenuThemes = void(WINAPI*)();
+    static const HMODULE uxtheme =
+        LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (!uxtheme)
+        return;
+    const auto setMode = reinterpret_cast<SetPreferredAppMode>(
+        reinterpret_cast<void*>(GetProcAddress(uxtheme, MAKEINTRESOURCEA(135))));
+    const auto flush = reinterpret_cast<FlushMenuThemes>(
+        reinterpret_cast<void*>(GetProcAddress(uxtheme, MAKEINTRESOURCEA(136))));
+    if (!setMode)
+        return;
+    constexpr int kForceDark = 2;
+    constexpr int kForceLight = 3;
+    setMode(dark ? kForceDark : kForceLight);
+    if (flush)
+        flush();
+#endif
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -65,5 +109,17 @@ int main(int argc, char** argv)
             window->installEventFilter(&focusClearer);
     }
     controller->initialize();
+
+    // settings->changed() fires for every setting, so only act on a new theme.
+    SettingsObject* settings = controller->settings();
+    auto applyTheme = [settings, dark = std::optional<bool>()]() mutable {
+        const bool nowDark = settings->theme != QLatin1String("light");
+        if (dark == nowDark)
+            return;
+        dark = nowDark;
+        applyColorScheme(nowDark);
+    };
+    applyTheme();
+    QObject::connect(settings, &SettingsObject::changed, &app, applyTheme);
     return app.exec();
 }
