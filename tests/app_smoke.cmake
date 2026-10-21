@@ -29,15 +29,33 @@ if(NOT rendered EQUAL 0)
 endif()
 
 set(ENV{QT_QPA_PLATFORM} offscreen)
+set(args --config ${WORK_DIR}/config --frames ${WORK_DIR}/frames
+         --start-tracking --quit-when-frames-end --recording-input)
 execute_process(
-    COMMAND ${GAME_FACE} --config ${WORK_DIR}/config --frames ${WORK_DIR}/frames
-            --start-tracking --quit-when-frames-end --recording-input
+    COMMAND ${GAME_FACE} ${args}
     OUTPUT_VARIABLE output
     ERROR_VARIABLE errors
     RESULT_VARIABLE exited
     TIMEOUT 120)
 if(NOT exited EQUAL 0)
-    message(FATAL_ERROR "game-face exited with ${exited}\n${errors}")
+    # Where did it stop? Run it again under gdb, when there is one, for a backtrace.
+    set(backtrace "")
+    find_program(GDB gdb)
+    if(GDB)
+        file(REMOVE_RECURSE ${WORK_DIR}/config)
+        file(MAKE_DIRECTORY ${WORK_DIR}/config)
+        file(WRITE ${WORK_DIR}/config/settings.json
+            [=[{"allow.input.simulation": true, "head.mouse.enabled": true}]=])
+        execute_process(
+            COMMAND ${GDB} -batch -ex run -ex "thread apply all bt 25" --args ${GAME_FACE} ${args}
+            OUTPUT_VARIABLE backtrace
+            ERROR_VARIABLE backtrace
+            TIMEOUT 300)
+    endif()
+    string(REGEX MATCHALL "input: [^\n]*" sent "${output}")
+    list(LENGTH sent sent_count)
+    message(FATAL_ERROR "game-face exited with ${exited} after sending ${sent_count} input events\n"
+                        "${errors}\n--- gdb ---\n${backtrace}")
 endif()
 
 # input: mouse moveBy <dx> <dy>

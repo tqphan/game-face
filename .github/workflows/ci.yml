@@ -45,7 +45,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
       - if: runner.os == 'Linux'
         name: System packages
-        run: sudo apt-get update && sudo apt-get install -y libgl-dev libegl-dev libxkbcommon-dev libvulkan-dev
+        run: sudo apt-get update && sudo apt-get install -y libgl-dev libegl-dev libxkbcommon-dev libvulkan-dev gdb
       - uses: lukka/get-cmake@latest
       - uses: jurplel/install-qt-action@v4
         with:
